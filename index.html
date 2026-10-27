@@ -1,649 +1,530 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-stone-900 text-stone-100 font-sans">
+<html lang="en" class="h-full bg-stone-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Brew & Batch POS - Mobile Landscape Edition</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Center.Coffee POS & Liquid Inventory</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts: Plus Jakarta Sans -->
+
+  <!-- Google Fonts: Inter & Caveat (Handwritten style for Center.Coffee tagline) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-          },
           colors: {
-            espresso: '#140c08',
-            roast: '#23160e',
-            crema: '#d4a373',
-            oat: '#fefae0',
-            latte: '#faedcd',
-            warmgray: '#e7e5e4',
+            brandCream: '#F9F6F0',
+            brandCreamDark: '#EFEAE1',
+            brandOlive: '#4D5D3E',
+            brandOliveDark: '#3A472E',
+            brandOliveLight: '#E2E8DC',
+            brandMatcha: '#688942',
+            brandUbe: '#6B428A',
+            brandStrawberry: '#D9534F',
+            brandDark: '#1A1A1A'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            handwriting: ['Caveat', 'cursive'],
+            mono: ['JetBrains Mono', 'monospace']
           }
         }
       }
     }
   </script>
+
   <style>
-    /* Custom Compact Scrollbars for landscape view */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #140c08;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #443327;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #d4a373;
-    }
+    /* Custom Scrollbars for fast mobile navigation */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+    /* Custom liquid animated filling effect */
     .liquid-wave {
-      background: linear-gradient(180deg, rgba(254, 250, 224, 0.95) 0%, rgba(212, 163, 115, 0.85) 100%);
-      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(180deg, #60A5FA 0%, #2563EB 100%);
+      transition: height 0.4s ease-in-out;
+    }
+
+    /* Prevent accidental text highlight on rapid touch tapping */
+    .touch-none-select {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col overflow-hidden bg-espresso text-stone-100 antialiased select-none">
+<body class="h-full font-sans bg-stone-100 text-stone-800 touch-none-select flex flex-col overflow-hidden">
 
-  <!-- TOP LANDSCAPE HEADER & TABS -->
-  <header class="h-10 bg-stone-950 border-b border-stone-800/80 flex items-center justify-between px-3 shrink-0 z-30">
+  <!-- MAIN NAVIGATION HEADER -->
+  <header class="bg-stone-900 text-stone-100 px-3 py-2 flex items-center justify-between shadow-md shrink-0 border-b border-stone-800">
     <div class="flex items-center space-x-2">
-      <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-crema to-amber-700 flex items-center justify-center text-stone-950 text-xs font-bold shadow">
-        <i class="fa-solid fa-mug-hot"></i>
+      <!-- Logo Accent -->
+      <div class="w-8 h-8 rounded-full bg-brandOlive flex items-center justify-center text-stone-100 font-extrabold text-xs shadow-inner">
+        CC
       </div>
-      <span class="font-bold text-xs tracking-wide text-stone-100 hidden sm:inline">Brew & Batch POS</span>
+      <div>
+        <h1 class="text-xs font-bold tracking-tight text-stone-100 flex items-center gap-1.5">
+          Center.Coffee <span class="text-[9px] font-normal px-1.5 py-0.2 bg-stone-800 text-brandOliveLight rounded border border-stone-700">POS & Inventory</span>
+        </h1>
+        <p class="text-[9px] text-stone-400 font-handwriting tracking-wide -mt-0.5">Good Coffee, Better Days</p>
+      </div>
     </div>
-
-    <!-- Navigation Tabs -->
-    <nav class="flex items-center space-x-1">
-      <button id="nav-pos" onclick="switchTab('pos')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-crema text-stone-950 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-cash-register text-[11px]"></i>
-        <span>Register</span>
-      </button>
-      <button id="nav-inventory" onclick="switchTab('inventory')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-stone-400 hover:text-stone-100 hover:bg-stone-900 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-boxes-stacked text-[11px]"></i>
-        <span>Stock & Milk</span>
-      </button>
-      <button id="nav-menu-edit" onclick="switchTab('menu-edit')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-stone-400 hover:text-stone-100 hover:bg-stone-900 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-pen-to-square text-[11px]"></i>
-        <span>Edit Menu</span>
-      </button>
-      <button id="nav-logs" onclick="switchTab('logs')" class="px-2.5 py-1 rounded-lg text-xs font-medium text-stone-400 hover:text-stone-100 hover:bg-stone-900 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-receipt text-[11px]"></i>
-        <span>Audit</span>
-      </button>
-    </nav>
 
     <!-- Quick Status Badges -->
     <div class="flex items-center space-x-2 text-[11px]">
-      <div class="bg-stone-900 border border-stone-800 px-2 py-0.5 rounded text-crema font-mono flex items-center gap-1">
-        <i class="fa-solid fa-bottle-droplet text-amber-500"></i>
-        <span id="header-milk-status" class="font-bold">650ml</span>
+      <div class="bg-stone-800 border border-stone-700 px-2 py-0.5 rounded-md text-emerald-300 font-mono flex items-center gap-1 text-[10px]">
+        <i class="fa-solid fa-bottle-droplet text-amber-400"></i>
+        <span id="header-milk-status" class="font-bold">650ml Total</span>
       </div>
-      <!-- Cart Drawer Toggle for small landscape screens -->
-      <button id="cart-toggle-btn" onclick="toggleCartDrawer()" class="relative px-2 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-700 rounded text-stone-200 flex items-center gap-1 font-semibold text-xs sm:hidden">
-        <i class="fa-solid fa-basket-shopping text-crema"></i>
+      <button id="cart-toggle-btn" onclick="toggleCartDrawer()" class="relative px-2 py-1 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded text-stone-200 flex items-center gap-1 font-semibold text-xs sm:hidden">
+        <i class="fa-solid fa-basket-shopping text-amber-400"></i>
         <span id="cart-badge" class="bg-amber-500 text-stone-950 font-bold px-1.5 rounded-full text-[10px]">0</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN VIEW AREA -->
-  <main class="flex-1 flex overflow-hidden relative">
+  <!-- APP VIEW CONTAINER (SPLIT SCREEN FOR LANDSCAPE & DESKTOP) -->
+  <div class="flex-1 flex overflow-hidden relative">
 
-    <!-- ================= VIEW 1: POS REGISTER ================= -->
-    <section id="view-pos" class="flex-1 flex w-full h-full overflow-hidden">
-      
-      <!-- Left Side: Coffee Choices Menu -->
-      <div class="flex-1 flex flex-col h-full overflow-hidden border-r border-stone-800/60 bg-espresso">
-        <!-- Compact Menu Filter Bar -->
-        <div class="px-3 py-1.5 bg-stone-950/60 border-b border-stone-800/60 flex items-center justify-between shrink-0">
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
-              <i class="fa-solid fa-fire-flame-curved"></i> 8oz Hot Drinks
-            </span>
-            <span class="text-[10px] text-stone-400 hidden sm:inline">(Exact Recipes Auto-Deducted)</span>
-          </div>
-          <button onclick="switchTab('menu-edit')" class="px-2 py-0.5 text-[10px] bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-md font-semibold transition">
-            <i class="fa-solid fa-plus mr-1"></i> Add / Edit Item
-          </button>
-        </div>
+    <!-- MAIN LEFT CONTENT (POS MENU & INVENTORY TRACKER) -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-brandCream">
 
-        <!-- Menu Choices Grid - Optimized for Mobile Landscape -->
-        <div class="flex-1 overflow-y-auto p-2 sm:p-3">
-          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2" id="pos-menu-grid">
-            <!-- Dynamically rendered menu cards -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Side: Dedicated Cart Sidebar / Drawer (FIXED LANDSCAPE CHECKOUT) -->
-      <aside id="cart-sidebar" class="w-64 sm:w-72 lg:w-80 bg-stone-950 flex flex-col h-full border-l border-stone-800/60 shrink-0 transition-all duration-300 z-40 absolute right-0 top-0 bottom-0 sm:relative shadow-xl sm:shadow-none translate-x-full sm:translate-x-0">
-        
-        <!-- Cart Header -->
-        <div class="px-3 py-1.5 border-b border-stone-800/60 flex items-center justify-between shrink-0 bg-stone-900/80">
-          <div class="flex items-center gap-1.5">
-            <i class="fa-solid fa-basket-shopping text-crema text-xs"></i>
-            <h2 class="font-bold text-stone-200 text-xs">Current Order</h2>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="clearCart()" class="text-[10px] text-stone-500 hover:text-rose-400 font-semibold transition">Clear</button>
-            <button onclick="toggleCartDrawer()" class="sm:hidden text-stone-400 hover:text-stone-200 text-xs px-1"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-        </div>
-
-        <!-- Scrollable Middle Section: Items & Impact -->
-        <div class="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
-          <div id="cart-items-container" class="space-y-1">
-            <div id="cart-empty-state" class="py-8 flex flex-col items-center justify-center text-center text-stone-600">
-              <i class="fa-solid fa-mug-saucer text-2xl mb-1 text-stone-700"></i>
-              <p class="text-xs font-semibold text-stone-400">Cart is empty</p>
-              <p class="text-[10px] text-stone-600 mt-0.5">Tap any drink on the menu</p>
-            </div>
-          </div>
-
-          <!-- Compact Recipe Ingredients Deducted Summary -->
-          <div id="cart-impact-panel" class="hidden p-1.5 rounded-lg bg-stone-900/90 border border-stone-800 text-[10px]">
-            <div class="font-bold text-crema mb-0.5 flex justify-between items-center text-[10px]">
-              <span>Deductions Required:</span>
-              <i class="fa-solid fa-flask text-stone-400 text-[9px]"></i>
-            </div>
-            <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 font-mono text-stone-300 text-[9px]">
-              <div class="flex justify-between"><span>8oz Cups:</span><span id="impact-cups" class="text-stone-100 font-bold">0</span></div>
-              <div class="flex justify-between"><span>Beans:</span><span id="impact-beans" class="text-amber-200 font-bold">0g</span></div>
-              <div class="flex justify-between"><span>Milk:</span><span id="impact-milk" class="text-crema font-bold">0ml</span></div>
-              <div class="flex justify-between"><span>Choc:</span><span id="impact-choc" class="text-stone-300 font-bold">0g</span></div>
-              <div class="flex justify-between col-span-2"><span>Condensed:</span><span id="impact-condensed" class="text-amber-100 font-bold">0g</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- STICKY FOOTER: Checkout Actions & Totals (Always visible on mobile landscape) -->
-        <div class="p-2 border-t border-stone-800 bg-stone-950 shrink-0 space-y-1 shadow-lg z-50">
-          <div class="space-y-0.5 text-[10px]">
-            <div class="flex justify-between text-stone-400">
-              <span>Subtotal</span>
-              <span id="cart-subtotal" class="font-mono text-stone-200">$0.00</span>
-            </div>
-            <div class="flex justify-between text-stone-400">
-              <span>Tax (8%)</span>
-              <span id="cart-tax" class="font-mono text-stone-200">$0.00</span>
-            </div>
-            <div class="flex justify-between text-xs font-bold text-stone-100 pt-0.5 border-t border-stone-800/80">
-              <span>Total</span>
-              <span id="cart-total" class="font-mono text-crema">$0.00</span>
-            </div>
-          </div>
-
-          <button id="checkout-btn" onclick="processCheckout()" disabled class="w-full py-2 bg-crema disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 font-extrabold text-xs rounded-lg shadow transition hover:bg-amber-400 active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-check-circle"></i>
-            <span>Complete Order</span>
-          </button>
-        </div>
-      </aside>
-
-    </section>
-
-    <!-- ================= VIEW 2: INVENTORY & MILK MONITOR ================= -->
-    <section id="view-inventory" class="hidden flex-1 overflow-y-auto p-3 space-y-3 bg-espresso w-full">
-      <!-- Section Compact Header -->
-      <div class="flex items-center justify-between bg-stone-950 p-2.5 rounded-xl border border-stone-800/80">
-        <div>
-          <h2 class="text-xs font-bold text-stone-100 flex items-center gap-1.5">
-            <i class="fa-solid fa-boxes-stacked text-crema"></i> Inventory & Milk Management
-          </h2>
-          <p class="text-[10px] text-stone-400">Directly edit stock levels or calibrate open liquid carton</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="openStockEditModal()" class="px-2 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600/40 text-amber-200 text-[10px] font-bold flex items-center gap-1 border border-amber-500/30 transition">
-            <i class="fa-solid fa-pen"></i> Direct Edit Stock
-          </button>
-          <button onclick="openCalibrationModal()" class="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-[10px] font-semibold flex items-center gap-1 border border-stone-700 transition">
-            <i class="fa-solid fa-sliders text-crema"></i> Calibrate
-          </button>
-          <button onclick="restockMilkBox()" class="px-2 py-1 rounded-lg bg-crema hover:bg-amber-400 text-stone-950 text-[10px] font-bold flex items-center gap-1 shadow transition">
-            <i class="fa-solid fa-plus"></i> +6 Milk Boxes
-          </button>
-        </div>
-      </div>
-
-      <!-- MAIN LIQUID TRACKER GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-        
-        <!-- Active Milk Box Display Card -->
-        <div class="md:col-span-5 bg-stone-950/90 rounded-xl border border-stone-800 p-3 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active Open Box
-            </span>
-            <span class="text-[10px] text-stone-400 font-mono">1000ml Capacity</span>
-          </div>
-
-          <!-- Compact Visual Carton Gauge -->
-          <div class="flex items-center justify-center my-2">
-            <div class="relative w-32 h-32 bg-stone-900 border border-stone-700 rounded-xl flex flex-col justify-end overflow-hidden shadow-inner">
-              <div id="carton-liquid-fill" class="liquid-wave w-full relative" style="height: 65%;">
-                <div class="absolute inset-x-0 top-0 h-0.5 bg-white/40"></div>
-              </div>
-              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none drop-shadow text-stone-900 font-bold">
-                <div id="carton-percent-text" class="text-2xl font-extrabold tracking-tight">65%</div>
-                <div id="carton-ml-text" class="text-[10px] font-mono font-semibold bg-stone-950/90 text-crema px-2 py-0.5 rounded-full border border-stone-800 mt-0.5">
-                  650 ml remaining
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Micro Adjustment Buttons -->
-          <div class="bg-stone-900/90 rounded-lg p-2 border border-stone-800 space-y-1">
-            <div class="flex justify-between items-center text-[10px]">
-              <span class="text-stone-300 font-medium">Quick Variance Adjust:</span>
-            </div>
-            <div class="grid grid-cols-4 gap-1">
-              <button onclick="quickAdjustVolume(-10, 'Pour/Spill')" class="py-1 bg-stone-800 hover:bg-rose-950 text-stone-300 rounded text-[10px] font-mono transition text-center">-10 ml</button>
-              <button onclick="quickAdjustVolume(-2, 'Steam Wand')" class="py-1 bg-stone-800 hover:bg-rose-950 text-stone-300 rounded text-[10px] font-mono transition text-center">-2 ml</button>
-              <button onclick="quickAdjustVolume(2, 'Pitcher Adj')" class="py-1 bg-stone-800 hover:bg-emerald-950 text-stone-300 rounded text-[10px] font-mono transition text-center">+2 ml</button>
-              <button onclick="quickAdjustVolume(10, 'Scale Tare')" class="py-1 bg-stone-800 hover:bg-emerald-950 text-stone-300 rounded text-[10px] font-mono transition text-center">+10 ml</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Unopened Boxes & Stock List -->
-        <div class="md:col-span-7 space-y-3">
-          
-          <!-- Reserve Boxes Card -->
-          <div class="bg-stone-950/90 rounded-xl border border-stone-800 p-3">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-bold text-stone-200 text-xs">Unopened Milk Carton Reserve</h3>
-              <div id="unopened-count-badge" class="px-2 py-0.5 bg-crema/20 border border-crema/30 text-crema rounded-lg text-[10px] font-bold font-mono">
-                12 Boxes
-              </div>
-            </div>
-
-            <div id="unopened-boxes-grid" class="grid grid-cols-6 gap-1.5 p-2 bg-stone-900/50 rounded-lg border border-stone-800/50 min-h-[50px] items-center">
-              <!-- Dynamically populated boxes -->
-            </div>
-
-            <div class="mt-2 p-1.5 bg-amber-950/30 border border-amber-800/40 rounded-lg flex items-center justify-between text-[10px] text-amber-200">
-              <span class="flex items-center gap-1"><i class="fa-solid fa-circle-info text-amber-400"></i> Auto-rolls over when active box hits 0ml</span>
-              <button onclick="forceOpenNewBox()" class="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded font-semibold transition">Open Box Now</button>
-            </div>
-          </div>
-
-          <!-- All Raw Ingredients Grid -->
-          <div class="grid grid-cols-2 gap-2">
-            <div class="bg-stone-950/90 p-2 rounded-lg border border-stone-800 flex justify-between items-center">
-              <div>
-                <div class="text-[10px] text-stone-400 font-bold flex items-center gap-1"><i class="fa-solid fa-seedling text-amber-600"></i> Beans</div>
-                <div class="text-xs font-bold font-mono text-stone-100 mt-0.5" id="stock-beans-text">2,500 g</div>
-              </div>
-              <button onclick="restockIngredient('coffeeBeansG', 500)" class="px-2 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[10px] text-stone-300 rounded transition">+500g</button>
-            </div>
-
-            <div class="bg-stone-950/90 p-2 rounded-lg border border-stone-800 flex justify-between items-center">
-              <div>
-                <div class="text-[10px] text-stone-400 font-bold flex items-center gap-1"><i class="fa-solid fa-whiskey-glass text-amber-400"></i> 8oz Cups</div>
-                <div class="text-xs font-bold font-mono text-stone-100 mt-0.5" id="stock-cups-text">150 units</div>
-              </div>
-              <button onclick="restockIngredient('paperCups8oz', 50)" class="px-2 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[10px] text-stone-300 rounded transition">+50 Cups</button>
-            </div>
-
-            <div class="bg-stone-950/90 p-2 rounded-lg border border-stone-800 flex justify-between items-center">
-              <div>
-                <div class="text-[10px] text-stone-400 font-bold flex items-center gap-1"><i class="fa-solid fa-bottle-droplet text-amber-800"></i> Choc Syrup</div>
-                <div class="text-xs font-bold font-mono text-stone-100 mt-0.5" id="stock-choc-text">1,200 g</div>
-              </div>
-              <button onclick="restockIngredient('chocolateSyrupG', 300)" class="px-2 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[10px] text-stone-300 rounded transition">+300g</button>
-            </div>
-
-            <div class="bg-stone-950/90 p-2 rounded-lg border border-stone-800 flex justify-between items-center">
-              <div>
-                <div class="text-[10px] text-stone-400 font-bold flex items-center gap-1"><i class="fa-solid fa-jar text-amber-200"></i> Condensed</div>
-                <div class="text-xs font-bold font-mono text-stone-100 mt-0.5" id="stock-condensed-text">900 g</div>
-              </div>
-              <button onclick="restockIngredient('condensedMilkG', 300)" class="px-2 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[10px] text-stone-300 rounded transition">+300g</button>
-            </div>
-          </div>
-
-          <div class="flex justify-end">
-            <button onclick="resetAllStockDefaults()" class="px-2.5 py-1 text-[10px] text-rose-400 hover:text-rose-300 border border-rose-900/50 hover:bg-rose-950/30 rounded-lg transition">
-              <i class="fa-solid fa-rotate-left mr-1"></i> Reset All Stock Defaults
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= VIEW 3: MENU & RECIPE EDITOR ================= -->
-    <section id="view-menu-edit" class="hidden flex-1 overflow-y-auto p-3 space-y-3 bg-espresso w-full">
-      <div class="flex items-center justify-between bg-stone-950 p-2.5 rounded-xl border border-stone-800/80">
-        <div>
-          <h2 class="text-xs font-bold text-stone-100 flex items-center gap-1.5">
-            <i class="fa-solid fa-pen-to-square text-crema"></i> Menu & Recipe Data Manipulation
-          </h2>
-          <p class="text-[10px] text-stone-400">Modify prices, exact recipe deductions, or add custom hot drinks</p>
-        </div>
-        <button onclick="openItemModal()" class="px-2.5 py-1 bg-crema hover:bg-amber-400 text-stone-950 font-bold text-[11px] rounded-lg shadow transition flex items-center gap-1">
-          <i class="fa-solid fa-plus"></i> Add New Drink
+      <!-- TOP TAB NAVIGATION (POS MENU vs INVENTORY AUDIT) -->
+      <div class="bg-stone-200/80 p-1 flex space-x-1 border-b border-stone-300 shrink-0">
+        <button id="tab-btn-pos" onclick="switchTab('pos')" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-stone-900 shadow-sm">
+          <i class="fa-solid fa-cash-register text-brandOlive"></i> Register POS
+        </button>
+        <button id="tab-btn-inv" onclick="switchTab('inv')" class="flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-stone-600 hover:bg-stone-100">
+          <i class="fa-solid fa-boxes-stacked text-amber-600"></i> Liquid & Stock Manager
+        </button>
+        <button id="tab-btn-logs" onclick="switchTab('logs')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-stone-600 hover:bg-stone-100">
+          <i class="fa-solid fa-clock-rotate-left text-stone-500"></i> Logs
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="menu-editor-grid">
-        <!-- Dynamically filled with recipe editing cards -->
-      </div>
-    </section>
+      <!-- VIEW 1: POS REGISTER MENU -->
+      <div id="view-pos" class="flex-1 flex flex-col overflow-hidden p-2 space-y-2">
+        
+        <!-- Category Selector Filter Pills -->
+        <div class="flex space-x-1 overflow-x-auto pb-1 shrink-0 no-scrollbar">
+          <button onclick="filterCategory('all')" class="cat-pill active px-3 py-1 bg-brandOlive text-white rounded-full text-[11px] font-bold shrink-0 shadow-sm">All Menu</button>
+          <button onclick="filterCategory('espresso-hot')" class="cat-pill px-3 py-1 bg-white hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-full text-[11px] font-bold shrink-0">Hot Espresso (8oz)</button>
+          <button onclick="filterCategory('espresso-cold')" class="cat-pill px-3 py-1 bg-white hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-full text-[11px] font-bold shrink-0">Cold Espresso (16oz)</button>
+          <button onclick="filterCategory('iced-specialty')" class="cat-pill px-3 py-1 bg-white hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-full text-[11px] font-bold shrink-0">Specialty Iced (16oz)</button>
+          <button onclick="filterCategory('sides')" class="cat-pill px-3 py-1 bg-white hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-full text-[11px] font-bold shrink-0">Pizza & Sides</button>
+        </div>
 
-    <!-- ================= VIEW 4: AUDIT LOGS ================= -->
-    <section id="view-logs" class="hidden flex-1 overflow-y-auto p-3 space-y-2 bg-espresso w-full">
-      <div class="flex items-center justify-between bg-stone-950 p-2.5 rounded-xl border border-stone-800/80">
-        <h2 class="text-xs font-bold text-stone-100 flex items-center gap-1.5">
-          <i class="fa-solid fa-list-check text-crema"></i> Consumption & Audit Log
-        </h2>
-        <button onclick="clearLogs()" class="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-[10px] font-semibold rounded transition">Clear View</button>
+        <!-- Menu Item Cards Grid -->
+        <div id="menu-grid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pr-1">
+          <!-- Dynamically populated menu cards -->
+        </div>
       </div>
 
-      <div class="bg-stone-950/90 rounded-xl border border-stone-800 overflow-hidden shadow">
-        <div class="overflow-x-auto">
+      <!-- VIEW 2: DUAL-CARTON LIQUID INVENTORY MANAGER -->
+      <div id="view-inv" class="flex-1 overflow-y-auto p-2 space-y-3 hidden">
+        
+        <!-- Section Header -->
+        <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-stone-300/80 shadow-sm">
+          <div>
+            <h2 class="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-boxes-stacked text-brandOlive"></i> Center.Coffee Dual-Carton Liquid Manager
+            </h2>
+            <p class="text-[10px] text-stone-500">Track up to 2 open cartons simultaneously. Open carton #2 early when #1 reaches 20% (200ml) or lower!</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="openStockEditModal()" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[10px] font-bold flex items-center gap-1 border border-stone-300 transition">
+              <i class="fa-solid fa-pen text-brandOlive"></i> Edit Stock
+            </button>
+            <button onclick="openCalibrationModal()" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[10px] font-bold flex items-center gap-1 border border-stone-300 transition">
+              <i class="fa-solid fa-sliders text-amber-600"></i> Calibrate
+            </button>
+            <button onclick="restockMilkBox()" class="px-2.5 py-1 rounded-lg bg-brandOlive hover:bg-brandOliveDark text-white text-[10px] font-bold flex items-center gap-1 shadow transition">
+              <i class="fa-solid fa-plus"></i> +6 Milk Cartons
+            </button>
+          </div>
+        </div>
+
+        <!-- MAIN LIQUID TRACKER GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          
+          <!-- Active Milk Boxes Display Area (2 Cartons Display) -->
+          <div class="md:col-span-6 bg-white rounded-xl border border-stone-300 p-3 flex flex-col justify-between shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1 border border-emerald-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Active Open Cartons (Max 2)
+              </span>
+              <span id="active-total-ml-badge" class="text-[10px] text-brandOlive font-mono font-bold">Total: 650ml</span>
+            </div>
+
+            <!-- Dual Active Cartons Display Grid -->
+            <div class="grid grid-cols-2 gap-2" id="active-cartons-container">
+              <!-- Dynamically populated carton cards -->
+            </div>
+
+            <!-- Quick Variance Micro Buttons -->
+            <div class="bg-stone-50 rounded-xl p-2 border border-stone-200 space-y-1">
+              <div class="flex justify-between items-center text-[10px]">
+                <span class="text-stone-600 font-bold">Quick Pour/Steam Loss Adjustment (Primary Box):</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1">
+                <button onclick="quickAdjustVolume(-10, 'Pour spill')" class="py-1 bg-white hover:bg-rose-50 hover:text-rose-700 border border-stone-300 text-stone-700 rounded-lg text-[10px] font-mono font-bold transition text-center shadow-sm">-10 ml</button>
+                <button onclick="quickAdjustVolume(-2, 'Steam purge')" class="py-1 bg-white hover:bg-rose-50 hover:text-rose-700 border border-stone-300 text-stone-700 rounded-lg text-[10px] font-mono font-bold transition text-center shadow-sm">-2 ml</button>
+                <button onclick="quickAdjustVolume(2, 'Tare adjust')" class="py-1 bg-white hover:bg-emerald-50 hover:text-emerald-700 border border-stone-300 text-stone-700 rounded-lg text-[10px] font-mono font-bold transition text-center shadow-sm">+2 ml</button>
+                <button onclick="quickAdjustVolume(10, 'Refill/Scale')" class="py-1 bg-white hover:bg-emerald-50 hover:text-emerald-700 border border-stone-300 text-stone-700 rounded-lg text-[10px] font-mono font-bold transition text-center shadow-sm">+10 ml</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unopened Cartons & Material Stocks -->
+          <div class="md:col-span-6 space-y-3">
+            
+            <!-- All Raw Ingredients & Stock Items Grid -->
+            <div class="grid grid-cols-2 gap-2">
+              
+              <!-- Milk Cartons Reserve Card -->
+              <div class="bg-white p-2.5 rounded-xl border border-stone-300 flex justify-between items-center shadow-sm">
+                <div>
+                  <div class="text-[10px] text-stone-500 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-bottle-droplet text-amber-600"></i> Milk Boxes (1L Reserve)
+                  </div>
+                  <div class="text-xs font-bold font-mono text-stone-900 mt-0.5" id="stock-milk-boxes-text">12 boxes</div>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <button id="open-second-box-btn" onclick="openSecondCartonEarly()" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-[10px] rounded-md font-semibold transition disabled:opacity-40 disabled:hover:bg-amber-100">
+                    Open 2nd
+                  </button>
+                  <button onclick="restockMilkBox()" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[10px] text-stone-700 rounded-md font-semibold transition">
+                    +6 Boxes
+                  </button>
+                </div>
+              </div>
+
+              <!-- Coffee Beans Card -->
+              <div class="bg-white p-2.5 rounded-xl border border-stone-300 flex justify-between items-center shadow-sm">
+                <div>
+                  <div class="text-[10px] text-stone-500 font-bold flex items-center gap-1"><i class="fa-solid fa-seedling text-amber-700"></i> Coffee Beans</div>
+                  <div class="text-xs font-bold font-mono text-stone-900 mt-0.5" id="stock-beans-text">2,500 g</div>
+                </div>
+                <button onclick="restockIngredient('coffeeBeansG', 500)" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[10px] text-stone-700 rounded-md font-semibold transition">+500g</button>
+              </div>
+
+              <!-- Paper Cups Card -->
+              <div class="bg-white p-2.5 rounded-xl border border-stone-300 flex justify-between items-center shadow-sm">
+                <div>
+                  <div class="text-[10px] text-stone-500 font-bold flex items-center gap-1"><i class="fa-solid fa-cup-straw text-brandMatcha"></i> Cups (8oz/16oz)</div>
+                  <div class="text-xs font-bold font-mono text-stone-900 mt-0.5" id="stock-cups-text">200 units</div>
+                </div>
+                <button onclick="restockIngredient('paperCups', 50)" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[10px] text-stone-700 rounded-md font-semibold transition">+50 Cups</button>
+              </div>
+
+              <!-- Matcha Powder Card -->
+              <div class="bg-white p-2.5 rounded-xl border border-stone-300 flex justify-between items-center shadow-sm">
+                <div>
+                  <div class="text-[10px] text-stone-500 font-bold flex items-center gap-1"><i class="fa-solid fa-leaf text-brandMatcha"></i> Matcha Powder</div>
+                  <div class="text-xs font-bold font-mono text-stone-900 mt-0.5" id="stock-matcha-text">800 g</div>
+                </div>
+                <button onclick="restockIngredient('matchaG', 200)" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[10px] text-stone-700 rounded-md font-semibold transition">+200g</button>
+              </div>
+
+              <!-- Pizza / Fries Stock Card -->
+              <div class="bg-white p-2.5 rounded-xl border border-stone-300 flex justify-between items-center shadow-sm col-span-2">
+                <div>
+                  <div class="text-[10px] text-stone-500 font-bold flex items-center gap-1"><i class="fa-solid fa-pizza-slice text-amber-600"></i> Pizza / Fries Stock</div>
+                  <div class="text-xs font-bold font-mono text-stone-900 mt-0.5" id="stock-sides-text">50 portions</div>
+                </div>
+                <button onclick="restockIngredient('sidesPortions', 20)" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[10px] text-stone-700 rounded-md font-semibold transition">+20 Portions</button>
+              </div>
+
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button onclick="resetAllStockDefaults()" class="px-3 py-1 text-[10px] text-rose-700 hover:text-rose-800 border border-rose-300 hover:bg-rose-50 rounded-lg transition font-semibold">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Reset All Inventory Defaults
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: INVENTORY AUDIT LOGS -->
+      <div id="view-logs" class="flex-1 overflow-y-auto p-3 space-y-2 hidden">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-stone-600"></i> Stock Deduction & Calibration Audit Log
+          </h2>
+          <button onclick="clearLogs()" class="text-[10px] text-stone-500 hover:text-rose-600 underline">Clear Log</button>
+        </div>
+
+        <div class="bg-white rounded-xl border border-stone-300 overflow-hidden shadow-sm">
           <table class="w-full text-left border-collapse text-[11px]">
             <thead>
-              <tr class="bg-stone-900 border-b border-stone-800 text-stone-400 font-semibold">
-                <th class="p-2 pl-3">Time</th>
-                <th class="p-2">Trigger</th>
-                <th class="p-2">Deducted Stock</th>
-                <th class="p-2">Active Milk</th>
+              <tr class="bg-stone-100 border-b border-stone-200 text-stone-600 font-bold">
+                <th class="p-2">Time</th>
+                <th class="p-2">Action / Trigger</th>
+                <th class="p-2">Ingredients Deducted</th>
+                <th class="p-2">Active Milk Level</th>
                 <th class="p-2">Type</th>
-                <th class="p-2 pr-3">Note</th>
               </tr>
             </thead>
-            <tbody id="logs-table-body" class="divide-y divide-stone-800/50 font-mono text-stone-300">
-              <!-- Dynamically populated -->
+            <tbody id="audit-log-table-body" class="divide-y divide-stone-200 text-stone-700">
+              <!-- Dynamically populated log rows -->
             </tbody>
           </table>
         </div>
       </div>
-    </section>
+    </main>
 
-  </main>
+    <!-- RIGHT SIDEBAR: CART / ORDER SUMMARY (ALWAYS STICKY & ACCESSIBLE) -->
+    <aside id="cart-sidebar" class="w-full sm:w-80 md:w-88 bg-white border-l border-stone-300 flex flex-col h-full z-20 absolute sm:relative inset-y-0 right-0 transform translate-x-full sm:translate-x-0 transition-transform duration-200 shadow-2xl sm:shadow-none">
+      
+      <!-- Cart Header -->
+      <div class="p-2.5 bg-stone-900 text-stone-100 flex items-center justify-between shrink-0 border-b border-stone-800">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-receipt text-amber-400 text-sm"></i>
+          <span class="font-bold text-xs tracking-wide">Current Order Cart</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="clearCart()" class="text-[10px] text-stone-400 hover:text-rose-400 underline font-semibold">Clear</button>
+          <button onclick="toggleCartDrawer()" class="sm:hidden text-stone-400 hover:text-white"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+      </div>
 
-  <!-- MODAL: DIRECT STOCK EDIT -->
-  <div id="stock-modal" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
-    <div class="bg-stone-900 border border-stone-800 rounded-xl max-w-sm w-full p-3.5 shadow-2xl space-y-3">
-      <div class="flex items-center justify-between border-b border-stone-800 pb-2">
-        <h3 class="font-bold text-stone-100 text-xs flex items-center gap-1.5">
-          <i class="fa-solid fa-boxes-stacked text-crema"></i> Direct Stock Override
+      <!-- Cart Item List -->
+      <div id="cart-items-container" class="flex-1 overflow-y-auto p-2 space-y-1.5 divide-y divide-stone-100">
+        <!-- Dynamically rendered cart items -->
+      </div>
+
+      <!-- Live Calculated Required Ingredients Box -->
+      <div class="bg-brandCream p-2 border-t border-stone-200 shrink-0 text-[10px] space-y-1">
+        <div class="text-stone-500 font-bold flex items-center justify-between">
+          <span>Required Ingredients for Order:</span>
+          <span id="req-milk-summary" class="font-mono text-brandOlive font-bold">0 ml Milk</span>
+        </div>
+        <div id="req-ingredients-pills" class="flex flex-wrap gap-1">
+          <span class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-700 font-mono">0g Beans</span>
+          <span class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-700 font-mono">0 Cups</span>
+        </div>
+      </div>
+
+      <!-- Cart Total & Complete Order Button Area -->
+      <div class="p-3 bg-stone-900 text-stone-100 border-t border-stone-800 shrink-0 space-y-2">
+        <div class="flex justify-between items-baseline">
+          <span class="text-xs text-stone-400 font-semibold">Total Amount:</span>
+          <span id="cart-total" class="text-lg font-bold font-mono text-amber-400">₱0.00</span>
+        </div>
+
+        <button id="complete-order-btn" onclick="processCheckout()" disabled class="w-full py-2.5 bg-brandOlive hover:bg-brandOliveDark disabled:bg-stone-800 disabled:text-stone-600 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check-circle"></i> Complete & Deduct Inventory
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MODAL: STOCK DIRECT OVERRIDE -->
+  <div id="stock-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white border border-stone-300 rounded-xl max-w-xs w-full p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+        <h3 class="font-bold text-stone-900 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-pen text-brandOlive"></i> Edit Inventory Quantities
         </h3>
-        <button onclick="closeStockEditModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-sm"></i></button>
+        <button onclick="closeStockEditModal()" class="text-stone-400 hover:text-stone-700"><i class="fa-solid fa-xmark text-sm"></i></button>
       </div>
 
       <div class="grid grid-cols-2 gap-2 text-[11px]">
         <div>
-          <label class="block text-stone-400 mb-0.5">Active Milk (ml)</label>
-          <input type="number" id="edit-stock-active-milk" min="0" max="1000" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Carton #1 (ml)</label>
+          <input type="number" id="edit-stock-carton1" min="0" max="1000" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
         <div>
-          <label class="block text-stone-400 mb-0.5">Reserve Boxes (1L)</label>
-          <input type="number" id="edit-stock-boxes" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Carton #2 (ml)</label>
+          <input type="number" id="edit-stock-carton2" min="0" max="1000" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
         <div>
-          <label class="block text-stone-400 mb-0.5">Coffee Beans (g)</label>
-          <input type="number" id="edit-stock-beans" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Unopened Cartons (1L)</label>
+          <input type="number" id="edit-stock-boxes" min="0" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
         <div>
-          <label class="block text-stone-400 mb-0.5">8oz Cups (pcs)</label>
-          <input type="number" id="edit-stock-cups" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Coffee Beans (g)</label>
+          <input type="number" id="edit-stock-beans" min="0" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
         <div>
-          <label class="block text-stone-400 mb-0.5">Chocolate Syrup (g)</label>
-          <input type="number" id="edit-stock-choc" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Paper Cups (pcs)</label>
+          <input type="number" id="edit-stock-cups" min="0" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
         <div>
-          <label class="block text-stone-400 mb-0.5">Condensed Milk (g)</label>
-          <input type="number" id="edit-stock-condensed" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
+          <label class="block text-stone-600 mb-0.5">Matcha Powder (g)</label>
+          <input type="number" id="edit-stock-matcha" min="0" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
+        </div>
+        <div>
+          <label class="block text-stone-600 mb-0.5">Pizza/Fries Portions</label>
+          <input type="number" id="edit-stock-sides" min="0" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-brandOlive">
         </div>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-stone-800">
-        <button onclick="closeStockEditModal()" class="px-3 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold rounded text-[11px]">Cancel</button>
-        <button onclick="saveStockEditModal()" class="px-3 py-1 bg-crema hover:bg-amber-400 text-stone-950 font-bold rounded text-[11px]">Save Stock</button>
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-stone-200">
+        <button onclick="closeStockEditModal()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-lg text-[11px]">Cancel</button>
+        <button onclick="saveStockEditModal()" class="px-3 py-1.5 bg-brandOlive hover:bg-brandOliveDark text-white font-bold rounded-lg text-[11px]">Save Quantities</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: MILK CALIBRATION -->
-  <div id="calibration-modal" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
-    <div class="bg-stone-900 border border-stone-800 rounded-xl max-w-xs w-full p-4 shadow-2xl space-y-3">
-      <div class="flex items-center justify-between border-b border-stone-800 pb-2">
-        <h3 class="font-bold text-stone-100 text-xs flex items-center gap-1.5">
-          <i class="fa-solid fa-sliders text-crema"></i> Calibrate Milk Box
+  <div id="calibration-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white border border-stone-300 rounded-xl max-w-xs w-full p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+        <h3 class="font-bold text-stone-900 text-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-sliders text-brandOlive"></i> Calibrate Active Milk Carton
         </h3>
-        <button onclick="closeCalibrationModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-sm"></i></button>
+        <button onclick="closeCalibrationModal()" class="text-stone-400 hover:text-stone-700"><i class="fa-solid fa-xmark text-sm"></i></button>
       </div>
 
       <div class="space-y-3 text-[11px]">
         <div>
-          <label class="block text-stone-400 mb-1">Measured Active Volume (ml)</label>
+          <label class="block text-stone-600 mb-1 font-semibold">Select Target Carton</label>
+          <select id="calib-carton-target" class="w-full bg-stone-50 border border-stone-300 text-stone-800 px-2.5 py-1.5 rounded-lg text-[11px] focus:outline-none focus:border-brandOlive">
+            <option value="0">Primary Active Carton (#1)</option>
+            <option value="1">Secondary Active Carton (#2)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-stone-600 mb-1 font-semibold">Exact Scale Weight / Volume (ml)</label>
           <div class="relative">
-            <input type="number" id="calib-exact-ml" min="0" max="1000" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2.5 py-1.5 rounded-lg font-mono text-xs focus:outline-none focus:border-crema pr-8">
-            <span class="absolute right-2 top-2 text-stone-500 font-mono">ml</span>
+            <input type="number" id="calib-exact-ml" min="0" max="1000" class="w-full bg-stone-50 border border-stone-300 text-stone-900 px-3 py-1.5 rounded-lg font-mono text-xs focus:outline-none focus:border-brandOlive pr-8">
+            <span class="absolute right-3 top-2 text-stone-400 font-mono">ml</span>
           </div>
         </div>
 
         <div>
-          <label class="block text-stone-400 mb-1">Adjustment Reason</label>
-          <select id="calib-reason" class="w-full bg-stone-950 border border-stone-800 text-stone-200 px-2.5 py-1.5 rounded-lg text-[11px] focus:outline-none focus:border-crema">
-            <option value="Steam wand purge loss">Steam wand purge loss</option>
-            <option value="Pitcher spill / scale error">Pitcher spill / scale error</option>
-            <option value="End-of-shift tare check">End-of-shift tare check</option>
+          <label class="block text-stone-600 mb-1 font-semibold">Adjustment Reason</label>
+          <select id="calib-reason" class="w-full bg-stone-50 border border-stone-300 text-stone-800 px-2.5 py-1.5 rounded-lg text-[11px] focus:outline-none focus:border-brandOlive">
+            <option value="Steam wand purge & foam loss">Steam wand purge & foam loss</option>
+            <option value="Pitcher spill / scale tare">Pitcher spill / scale tare</option>
+            <option value="Shift handover count">Shift handover count</option>
           </select>
         </div>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-stone-800">
-        <button onclick="closeCalibrationModal()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold rounded-lg text-[11px]">Cancel</button>
-        <button onclick="applyCalibrationModal()" class="px-3 py-1.5 bg-crema hover:bg-amber-400 text-stone-950 font-bold rounded-lg text-[11px]">Save</button>
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-stone-200">
+        <button onclick="closeCalibrationModal()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-lg text-[11px]">Cancel</button>
+        <button onclick="applyCalibrationModal()" class="px-3 py-1.5 bg-brandOlive hover:bg-brandOliveDark text-white font-bold rounded-lg text-[11px]">Save Calibration</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: ADD / EDIT MENU ITEM RECIPE -->
-  <div id="item-modal" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
-    <div class="bg-stone-900 border border-stone-800 rounded-xl max-w-sm w-full p-3.5 shadow-2xl space-y-3">
-      <div class="flex items-center justify-between border-b border-stone-800 pb-2">
-        <h3 id="item-modal-title" class="font-bold text-stone-100 text-xs flex items-center gap-1.5">
-          <i class="fa-solid fa-mug-hot text-crema"></i> Edit Drink & Recipe
-        </h3>
-        <button onclick="closeItemModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-sm"></i></button>
-      </div>
+  <!-- TOAST NOTIFICATION BANNER -->
+  <div id="toast-container" class="fixed bottom-3 left-3 z-50 flex flex-col space-y-1 pointer-events-none"></div>
 
-      <input type="hidden" id="edit-item-id">
-      <div class="space-y-2 text-[11px]">
-        <div class="grid grid-cols-3 gap-2">
-          <div class="col-span-2">
-            <label class="block text-stone-400 mb-0.5">Drink Name</label>
-            <input type="text" id="edit-item-name" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded text-xs focus:outline-none focus:border-crema">
-          </div>
-          <div>
-            <label class="block text-stone-400 mb-0.5">Price ($)</label>
-            <input type="number" step="0.01" id="edit-item-price" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-stone-400 mb-0.5">Description</label>
-          <input type="text" id="edit-item-desc" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded text-xs focus:outline-none focus:border-crema">
-        </div>
-
-        <div class="border-t border-stone-800/80 pt-2 font-semibold text-crema text-[10px]">
-          Exact Recipe Deductions Per Cup:
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-stone-400 mb-0.5">Coffee Beans (g)</label>
-            <input type="number" id="edit-item-beans" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
-          </div>
-          <div>
-            <label class="block text-stone-400 mb-0.5">Milk (ml)</label>
-            <input type="number" id="edit-item-milk" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
-          </div>
-          <div>
-            <label class="block text-stone-400 mb-0.5">Choc Syrup (g)</label>
-            <input type="number" id="edit-item-choc" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
-          </div>
-          <div>
-            <label class="block text-stone-400 mb-0.5">Condensed Milk (g)</label>
-            <input type="number" id="edit-item-condensed" min="0" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-2 py-1 rounded font-mono text-xs focus:outline-none focus:border-crema">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between pt-2 border-t border-stone-800">
-        <button id="delete-item-btn" onclick="deleteMenuItem()" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-200 text-[10px] font-semibold rounded">Delete Drink</button>
-        <div class="flex items-center space-x-2">
-          <button onclick="closeItemModal()" class="px-3 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold rounded text-[11px]">Cancel</button>
-          <button onclick="saveMenuItemModal()" class="px-3 py-1 bg-crema hover:bg-amber-400 text-stone-950 font-bold rounded text-[11px]">Save Item</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-3 right-3 bg-stone-800 border border-stone-700 text-stone-100 px-3 py-2 rounded-lg shadow-xl flex items-center space-x-2 transition-all duration-300 transform translate-y-16 opacity-0 pointer-events-none z-50 text-xs">
-    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-    <span id="toast-message" class="font-medium">Notification</span>
-  </div>
-
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
-    // --- DEFAULT INITIAL STATE ---
+    // --- CENTER.COFFEE MENU DEFINITION WITH RECIPES ---
     const DEFAULT_MENU = [
-      {
-        id: 'americano',
-        name: 'Americano',
-        price: 3.50,
-        recipe: { beansG: 9, milkMl: 0, chocSyrupG: 0, condensedMilkG: 0, cups: 1 },
-        icon: 'fa-mug-hot',
-        desc: 'Hot Water + 9g Beans'
-      },
-      {
-        id: 'cappuccino',
-        name: 'Cappuccino',
-        price: 4.25,
-        recipe: { beansG: 9, milkMl: 118, chocSyrupG: 0, condensedMilkG: 0, cups: 1 }, // 4oz milk = 118ml
-        icon: 'fa-mug-saucer',
-        desc: '118ml Milk (4oz) + 9g Beans'
-      },
-      {
-        id: 'mocha',
-        name: 'Mocha',
-        price: 4.75,
-        recipe: { beansG: 9, milkMl: 118, chocSyrupG: 30, condensedMilkG: 0, cups: 1 },
-        icon: 'fa-cubes-stacked',
-        desc: '118ml Milk + 9g Beans + 30g Choc'
-      },
-      {
-        id: 'spanish_latte',
-        name: 'Spanish Latte',
-        price: 4.75,
-        recipe: { beansG: 9, milkMl: 118, chocSyrupG: 0, condensedMilkG: 30, cups: 1 },
-        icon: 'fa-whiskey-glass',
-        desc: '118ml Milk + 9g Beans + 30g Cond. Milk'
-      }
-    ];
+      // HOT ESPRESSO (8oz)
+      { id: 'hot_americano', name: 'Americano (Hot 8oz)', category: 'espresso-hot', price: 50, recipe: { beansG: 9, milkMl: 0, cups: 1 } },
+      { id: 'hot_cappuccino', name: 'Cappuccino (Hot 8oz)', category: 'espresso-hot', price: 70, recipe: { beansG: 9, milkMl: 118, cups: 1 } },
+      { id: 'hot_mocha', name: 'Mocha (Hot 8oz)', category: 'espresso-hot', price: 70, recipe: { beansG: 9, milkMl: 118, cups: 1 } },
+      { id: 'hot_spanish', name: 'Spanish Latte (Hot 8oz)', category: 'espresso-hot', price: 70, recipe: { beansG: 9, milkMl: 118, cups: 1 } },
 
-    const DEFAULT_INVENTORY = {
-      activeMilkMl: 650,      // Active opened carton (1000ml max)
-      unopenedMilkBoxes: 12,  // Sealed 1000ml boxes
-      coffeeBeansG: 2500,     // grams
-      paperCups8oz: 150,      // units
-      chocolateSyrupG: 1200,  // grams
-      condensedMilkG: 900,    // grams
-      cartonCapMl: 1000
-    };
+      // COLD ESPRESSO (16oz)
+      { id: 'cold_americano', name: 'Americano (Cold 16oz)', category: 'espresso-cold', price: 100, recipe: { beansG: 18, milkMl: 0, cups: 1 } },
+      { id: 'cold_cappuccino', name: 'Cappuccino (Cold 16oz)', category: 'espresso-cold', price: 100, recipe: { beansG: 18, milkMl: 180, cups: 1 } },
+      { id: 'cold_mocha', name: 'Mocha (Cold 16oz)', category: 'espresso-cold', price: 100, recipe: { beansG: 18, milkMl: 180, cups: 1 } },
+      { id: 'cold_spanish', name: 'Spanish Latte (Cold 16oz)', category: 'espresso-cold', price: 100, recipe: { beansG: 18, milkMl: 180, cups: 1 } },
+
+      // SPECIALTY ICED DRINKS (16oz) - WITH VARIANTS REGULAR (₱100) vs LATTE (₱130)
+      { id: 'iced_matcha', name: 'Iced Matcha', category: 'iced-specialty', price: 100, variants: [{ name: 'Regular', price: 100, milkMl: 150 }, { name: 'Latte', price: 130, milkMl: 200 }], recipe: { matchaG: 12, cups: 1 } },
+      { id: 'iced_strawberry_matcha', name: 'Strawberry Matcha', category: 'iced-specialty', price: 100, variants: [{ name: 'Regular', price: 100, milkMl: 150 }, { name: 'Latte', price: 130, milkMl: 200 }], recipe: { matchaG: 12, cups: 1 } },
+      { id: 'iced_ube_matcha', name: 'Ube Matcha', category: 'iced-specialty', price: 100, variants: [{ name: 'Regular', price: 100, milkMl: 150 }, { name: 'Latte', price: 130, milkMl: 200 }], recipe: { matchaG: 12, cups: 1 } },
+      { id: 'iced_chocolate', name: 'Iced Chocolate', category: 'iced-specialty', price: 100, recipe: { milkMl: 180, cups: 1 } },
+
+      // SIDES
+      { id: 'bucket_fries', name: 'Bucket Fries', category: 'sides', price: 150, recipe: { sidesPortions: 1 } },
+      { id: 'jos_pizza', name: 'JO\'s Pizza 11"', category: 'sides', price: 150, recipe: { sidesPortions: 1 } }
+    ];
 
     // --- APP STATE ---
     let STATE = {
-      inventory: JSON.parse(localStorage.getItem('bb_pos_inventory')) || { ...DEFAULT_INVENTORY },
-      menu: JSON.parse(localStorage.getItem('bb_pos_menu')) || [...DEFAULT_MENU],
+      inventory: JSON.parse(localStorage.getItem('cc_inventory')) || {
+        activeCartons: [
+          { id: 'carton_1', ml: 650 },
+          { id: 'carton_2', ml: 0 }
+        ],
+        unopenedMilkBoxes: 12,
+        coffeeBeansG: 2500,
+        paperCups: 200,
+        matchaG: 800,
+        sidesPortions: 50,
+        cartonCapMl: 1000
+      },
+      menu: JSON.parse(localStorage.getItem('cc_menu')) || [...DEFAULT_MENU],
       cart: [],
-      logs: JSON.parse(localStorage.getItem('bb_pos_logs')) || [
-        { time: '09:10 AM', trigger: 'Spanish Latte Order', deducted: '118ml Milk, 9g Beans, 30g Cond.Milk, 1 Cup', remainingMilk: '650 ml', type: 'Deduction', note: 'Checkout' },
-        { time: '08:30 AM', trigger: 'Calibration', deducted: '-10ml Milk', remainingMilk: '768 ml', type: 'Variance', note: 'Steam wand purge' }
+      currentCategory: 'all',
+      selectedVariants: {}, // itemId -> variantIndex
+      logs: JSON.parse(localStorage.getItem('cc_logs')) || [
+        { time: '10:05 AM', trigger: 'Spanish Latte Cold', deducted: '180ml Milk, 18g Beans, 1 Cup', remainingMilk: '650 ml', type: 'Deduction', note: 'POS Sale ₱100' },
+        { time: '09:40 AM', trigger: 'Steam Wand Adjust', deducted: '-10ml Milk', remainingMilk: '830 ml', type: 'Variance', note: 'Foam purge tare' }
       ]
     };
 
-    function saveState() {
-      localStorage.setItem('bb_pos_inventory', JSON.stringify(STATE.inventory));
-      localStorage.setItem('bb_pos_menu', JSON.stringify(STATE.menu));
-      localStorage.setItem('bb_pos_logs', JSON.stringify(STATE.logs));
+    // Migration helper for legacy single activeMilkMl state
+    if (STATE.inventory.activeMilkMl !== undefined && !STATE.inventory.activeCartons) {
+      STATE.inventory.activeCartons = [
+        { id: 'carton_1', ml: STATE.inventory.activeMilkMl },
+        { id: 'carton_2', ml: 0 }
+      ];
+      delete STATE.inventory.activeMilkMl;
     }
 
-    // --- AUDIO FEEDBACK SYNTHESIZER ---
-    function playBeep(type = 'add') {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+    function saveState() {
+      localStorage.setItem('cc_inventory', JSON.stringify(STATE.inventory));
+      localStorage.setItem('cc_menu', JSON.stringify(STATE.menu));
+      localStorage.setItem('cc_logs', JSON.stringify(STATE.logs));
+    }
 
-        if (type === 'add') {
-          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
-          gain.gain.setValueAtTime(0.15, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.08);
-        } else if (type === 'success') {
-          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.15);
-          gain.gain.setValueAtTime(0.2, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.15);
-        }
-      } catch (e) {}
+    // Helper to compute total milk volume across open cartons
+    function getTotalActiveMilkMl() {
+      if (!STATE.inventory.activeCartons) return 0;
+      return STATE.inventory.activeCartons.reduce((sum, c) => sum + (c.ml || 0), 0);
     }
 
     // --- INITIALIZATION ---
     window.onload = function() {
       renderMenu();
-      renderMenuEditor();
-      updateInventoryUI();
-      renderUnopenedBoxes();
-      renderLogs();
       updateCartUI();
+      updateInventoryUI();
+      renderLogs();
     };
 
-    // --- DRAWER & NAVIGATION ---
+    // --- NAVIGATION & TABS ---
     function switchTab(tab) {
       document.getElementById('view-pos').classList.add('hidden');
-      document.getElementById('view-inventory').classList.add('hidden');
-      document.getElementById('view-menu-edit').classList.add('hidden');
+      document.getElementById('view-inv').classList.add('hidden');
       document.getElementById('view-logs').classList.add('hidden');
 
-      ['pos', 'inventory', 'menu-edit', 'logs'].forEach(t => {
-        const btn = document.getElementById(`nav-${t}`);
-        if (btn) btn.className = "px-2.5 py-1 rounded-lg text-xs font-medium text-stone-400 hover:text-stone-100 hover:bg-stone-900 flex items-center gap-1.5 transition";
-      });
+      document.getElementById('tab-btn-pos').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-stone-600 hover:bg-stone-100";
+      document.getElementById('tab-btn-inv').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-stone-600 hover:bg-stone-100";
+      document.getElementById('tab-btn-logs').className = "px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-stone-600 hover:bg-stone-100";
 
-      const activeBtn = document.getElementById(`nav-${tab}`);
-      if (activeBtn) activeBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-crema text-stone-950 flex items-center gap-1.5 transition";
-      
-      const targetView = document.getElementById(`view-${tab}`);
-      if (targetView) targetView.classList.remove('hidden');
+      if (tab === 'pos') {
+        document.getElementById('view-pos').classList.remove('hidden');
+        document.getElementById('tab-btn-pos').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-stone-900 shadow-sm";
+      } else if (tab === 'inv') {
+        document.getElementById('view-inv').classList.remove('hidden');
+        document.getElementById('tab-btn-inv').className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-stone-900 shadow-sm";
+      } else if (tab === 'logs') {
+        document.getElementById('view-logs').classList.remove('hidden');
+        document.getElementById('tab-btn-logs').className = "px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-stone-900 shadow-sm";
+      }
     }
 
     function toggleCartDrawer() {
@@ -651,105 +532,110 @@
       sidebar.classList.toggle('translate-x-full');
     }
 
-    // --- MENU RENDER ---
+    // --- POS MENU RENDERING ---
+    function filterCategory(cat) {
+      STATE.currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(el => {
+        el.className = "cat-pill px-3 py-1 bg-white hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-full text-[11px] font-bold shrink-0";
+      });
+      event.target.className = "cat-pill active px-3 py-1 bg-brandOlive text-white rounded-full text-[11px] font-bold shrink-0 shadow-sm";
+      renderMenu();
+    }
+
     function renderMenu() {
-      const grid = document.getElementById('pos-menu-grid');
+      const grid = document.getElementById('menu-grid');
       grid.innerHTML = '';
 
-      STATE.menu.forEach(item => {
-        const card = document.createElement('div');
-        card.className = "bg-stone-950/80 border border-stone-800 hover:border-crema/80 rounded-xl p-2.5 flex flex-col justify-between cursor-pointer transition active:scale-[0.98] shadow group";
-        card.onclick = () => addToCart(item.id);
+      const items = STATE.menu.filter(i => STATE.currentCategory === 'all' || i.category === STATE.currentCategory);
 
-        const r = item.recipe;
-        let recipeTags = `<span class="bg-stone-900 border border-stone-800 px-1 py-0.5 rounded text-amber-200">${r.beansG}g Beans</span>`;
-        if (r.milkMl > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-1 py-0.5 rounded text-crema">${r.milkMl}ml Milk</span>`;
-        if (r.chocSyrupG > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-1 py-0.5 rounded text-stone-300">${r.chocSyrupG}g Choc</span>`;
-        if (r.condensedMilkG > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-1 py-0.5 rounded text-amber-100">${r.condensedMilkG}g Cond.</span>`;
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "bg-white border border-stone-300/80 rounded-xl p-2.5 flex flex-col justify-between shadow-sm hover:shadow transition relative group";
+
+        let priceDisplay = `₱${item.price}`;
+        let variantPickerHtml = '';
+
+        if (item.variants && item.variants.length > 0) {
+          const selectedIdx = STATE.selectedVariants[item.id] || 0;
+          priceDisplay = `₱${item.variants[selectedIdx].price}`;
+
+          variantPickerHtml = `
+            <div class="flex space-x-1 my-1.5">
+              ${item.variants.map((v, idx) => `
+                <button onclick="selectVariant('${item.id}', ${idx})" class="flex-1 py-0.5 text-[9px] font-bold rounded border ${idx === selectedIdx ? 'bg-brandOlive text-white border-brandOlive' : 'bg-stone-100 text-stone-700 border-stone-300'}">
+                  ${v.name}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
 
         card.innerHTML = `
           <div>
-            <div class="flex justify-between items-start mb-1.5">
-              <div class="w-7 h-7 rounded-lg bg-stone-900 border border-stone-800 group-hover:border-crema/40 flex items-center justify-center text-crema text-xs">
-                <i class="fa-solid ${item.icon || 'fa-mug-hot'}"></i>
-              </div>
-              <span class="font-mono text-xs font-bold text-crema">$${Number(item.price).toFixed(2)}</span>
+            <div class="flex justify-between items-start">
+              <h3 class="font-bold text-stone-900 text-xs leading-tight">${item.name}</h3>
+              <span class="text-xs font-mono font-bold text-brandOlive">${priceDisplay}</span>
             </div>
-            <h3 class="font-bold text-stone-100 text-xs">${item.name}</h3>
-            <p class="text-[10px] text-stone-400 leading-tight mt-0.5 line-clamp-1">${item.desc}</p>
-            <div class="flex flex-wrap gap-1 mt-2 text-[9px] font-mono">
-              ${recipeTags}
-            </div>
+            ${variantPickerHtml}
           </div>
-          <div class="mt-2 pt-1 border-t border-stone-900 flex justify-between items-center text-[10px] text-stone-400 group-hover:text-stone-100">
-            <span>+ Add Cup</span>
-            <i class="fa-solid fa-circle-plus text-crema text-xs"></i>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
 
-    // --- MENU EDITOR RENDER ---
-    function renderMenuEditor() {
-      const grid = document.getElementById('menu-editor-grid');
-      grid.innerHTML = '';
-
-      STATE.menu.forEach(item => {
-        const card = document.createElement('div');
-        card.className = "bg-stone-950/90 border border-stone-800 rounded-xl p-3 space-y-2";
-        
-        const r = item.recipe;
-        card.innerHTML = `
-          <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-              <div class="w-7 h-7 rounded bg-stone-900 border border-stone-800 flex items-center justify-center text-crema text-xs">
-                <i class="fa-solid ${item.icon || 'fa-mug-hot'}"></i>
-              </div>
-              <div>
-                <h3 class="font-bold text-xs text-stone-100">${item.name}</h3>
-                <span class="text-[10px] font-mono text-crema font-bold">$${Number(item.price).toFixed(2)}</span>
-              </div>
-            </div>
-            <button onclick="openItemModal('${item.id}')" class="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 text-[10px] font-semibold rounded border border-stone-700 transition">
-              <i class="fa-solid fa-pen mr-1"></i> Edit Recipe
+          <div class="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between">
+            <span class="text-[9px] text-stone-500 font-mono">
+              ${item.recipe.milkMl ? item.recipe.milkMl + 'ml milk' : item.recipe.beansG ? item.recipe.beansG + 'g beans' : 'portion'}
+            </span>
+            <button onclick="addToCart('${item.id}')" class="px-2.5 py-1 bg-stone-900 hover:bg-brandOlive text-white font-bold rounded-lg text-[10px] transition flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-plus text-[9px]"></i> Add
             </button>
           </div>
-          <p class="text-[10px] text-stone-400">${item.desc}</p>
-          <div class="grid grid-cols-4 gap-1 bg-stone-900/60 p-1.5 rounded-lg border border-stone-800 text-[9px] font-mono text-stone-300">
-            <div>Beans: <b class="text-stone-100">${r.beansG}g</b></div>
-            <div>Milk: <b class="text-crema">${r.milkMl}ml</b></div>
-            <div>Choc: <b class="text-amber-200">${r.chocSyrupG}g</b></div>
-            <div>Cond: <b class="text-amber-100">${r.condensedMilkG}g</b></div>
-          </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    // --- CART LOGIC ---
-    function addToCart(itemId) {
-      const item = STATE.menu.find(m => m.id === itemId);
-      if (!item) return;
-      const existing = STATE.cart.find(c => c.id === itemId);
+    function selectVariant(itemId, idx) {
+      STATE.selectedVariants[itemId] = idx;
+      renderMenu();
+    }
 
+    // --- CART MANAGMENT ---
+    function addToCart(itemId) {
+      const item = STATE.menu.find(i => i.id === itemId);
+      if (!item) return;
+
+      let name = item.name;
+      let price = item.price;
+      let milkMl = item.recipe.milkMl || 0;
+
+      if (item.variants && item.variants.length > 0) {
+        const vIdx = STATE.selectedVariants[itemId] || 0;
+        const variant = item.variants[vIdx];
+        name = `${item.name} (${variant.name})`;
+        price = variant.price;
+        if (variant.milkMl) milkMl = variant.milkMl;
+      }
+
+      const existing = STATE.cart.find(c => c.itemId === itemId && c.name === name);
       if (existing) {
         existing.qty += 1;
       } else {
-        STATE.cart.push({ ...item, qty: 1 });
+        STATE.cart.push({
+          itemId,
+          name,
+          price,
+          qty: 1,
+          recipe: { ...item.recipe, milkMl }
+        });
       }
 
-      playBeep('add');
+      playBeep();
       updateCartUI();
     }
 
-    function updateCartQty(itemId, delta) {
-      const index = STATE.cart.findIndex(c => c.id === itemId);
-      if (index > -1) {
-        STATE.cart[index].qty += delta;
-        if (STATE.cart[index].qty <= 0) {
-          STATE.cart.splice(index, 1);
-        }
+    function updateCartQty(idx, delta) {
+      if (!STATE.cart[idx]) return;
+      STATE.cart[idx].qty += delta;
+      if (STATE.cart[idx].qty <= 0) {
+        STATE.cart.splice(idx, 1);
       }
       updateCartUI();
     }
@@ -759,191 +645,236 @@
       updateCartUI();
     }
 
-    function calculateCartIngredients() {
-      let totals = { beansG: 0, milkMl: 0, chocSyrupG: 0, condensedMilkG: 0, cups: 0, subtotal: 0, totalItems: 0 };
-      STATE.cart.forEach(item => {
-        totals.subtotal += item.price * item.qty;
-        totals.beansG += (item.recipe.beansG || 0) * item.qty;
-        totals.milkMl += (item.recipe.milkMl || 0) * item.qty;
-        totals.chocSyrupG += (item.recipe.chocSyrupG || 0) * item.qty;
-        totals.condensedMilkG += (item.recipe.condensedMilkG || 0) * item.qty;
-        totals.cups += (item.recipe.cups || 1) * item.qty;
-        totals.totalItems += item.qty;
-      });
-      return totals;
-    }
-
     function updateCartUI() {
       const container = document.getElementById('cart-items-container');
-      const emptyState = document.getElementById('cart-empty-state');
-      const impactPanel = document.getElementById('cart-impact-panel');
-      const checkoutBtn = document.getElementById('checkout-btn');
-      const cartBadge = document.getElementById('cart-badge');
+      const badge = document.getElementById('cart-badge');
+      const totalEl = document.getElementById('cart-total');
+      const checkoutBtn = document.getElementById('complete-order-btn');
 
-      const totals = calculateCartIngredients();
-      cartBadge.innerText = totals.totalItems;
+      const totalItems = STATE.cart.reduce((sum, i) => sum + i.qty, 0);
+      badge.innerText = totalItems;
 
       if (STATE.cart.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(emptyState);
-        impactPanel.classList.add('hidden');
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center p-4 text-stone-400 my-auto">
+            <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-stone-300"></i>
+            <p class="text-xs font-semibold">Cart is currently empty</p>
+            <p class="text-[10px] text-stone-400 mt-0.5">Select menu items on the left to begin</p>
+          </div>
+        `;
+        totalEl.innerText = "₱0.00";
         checkoutBtn.disabled = true;
-
-        document.getElementById('cart-subtotal').innerText = '$0.00';
-        document.getElementById('cart-tax').innerText = '$0.00';
-        document.getElementById('cart-total').innerText = '$0.00';
+        updateCartIngredientsSummary();
         return;
       }
 
-      if (emptyState.parentNode) emptyState.remove();
       container.innerHTML = '';
+      let grandTotal = 0;
 
-      STATE.cart.forEach(cartItem => {
+      STATE.cart.forEach((item, idx) => {
+        const lineTotal = item.price * item.qty;
+        grandTotal += lineTotal;
+
         const row = document.createElement('div');
-        row.className = "flex items-center justify-between bg-stone-900 p-1.5 rounded-lg border border-stone-800 text-[11px]";
+        row.className = "py-1.5 flex items-center justify-between text-xs";
         row.innerHTML = `
-          <div class="flex-1 pr-1 truncate">
-            <div class="font-bold text-stone-200 truncate">${cartItem.name}</div>
-            <div class="text-[9px] text-stone-400 font-mono">$${Number(cartItem.price).toFixed(2)}</div>
+          <div class="flex-1 pr-2">
+            <div class="font-bold text-stone-800 text-[11px] leading-snug">${item.name}</div>
+            <div class="text-[10px] text-stone-500 font-mono">₱${item.price} × ${item.qty}</div>
           </div>
           <div class="flex items-center space-x-1">
-            <button onclick="updateCartQty('${cartItem.id}', -1)" class="w-5 h-5 rounded bg-stone-800 text-stone-300 hover:bg-stone-700 flex items-center justify-center font-bold text-xs">-</button>
-            <span class="font-mono font-bold text-stone-200 w-4 text-center text-xs">${cartItem.qty}</span>
-            <button onclick="updateCartQty('${cartItem.id}', 1)" class="w-5 h-5 rounded bg-stone-800 text-stone-300 hover:bg-stone-700 flex items-center justify-center font-bold text-xs">+</button>
-          </div>
-          <div class="w-12 text-right font-mono font-bold text-crema text-xs pl-1">
-            $${(cartItem.price * cartItem.qty).toFixed(2)}
+            <button onclick="updateCartQty(${idx}, -1)" class="w-5 h-5 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded flex items-center justify-center font-bold text-stone-700 text-xs">-</button>
+            <span class="w-4 text-center font-mono font-bold text-stone-900 text-xs">${item.qty}</span>
+            <button onclick="updateCartQty(${idx}, 1)" class="w-5 h-5 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded flex items-center justify-center font-bold text-stone-700 text-xs">+</button>
+            <span class="w-12 text-right font-mono font-bold text-stone-900 text-xs">₱${lineTotal}</span>
           </div>
         `;
         container.appendChild(row);
       });
 
-      impactPanel.classList.remove('hidden');
-      document.getElementById('impact-cups').innerText = `${totals.cups} pcs`;
-      document.getElementById('impact-beans').innerText = `${totals.beansG}g`;
-      document.getElementById('impact-milk').innerText = `${totals.milkMl}ml`;
-      document.getElementById('impact-choc').innerText = `${totals.chocSyrupG}g`;
-      document.getElementById('impact-condensed').innerText = `${totals.condensedMilkG}g`;
-
-      const tax = totals.subtotal * 0.08;
-      const grandTotal = totals.subtotal + tax;
-
-      document.getElementById('cart-subtotal').innerText = `$${totals.subtotal.toFixed(2)}`;
-      document.getElementById('cart-tax').innerText = `$${tax.toFixed(2)}`;
-      document.getElementById('cart-total').innerText = `$${grandTotal.toFixed(2)}`;
-
+      totalEl.innerText = `₱${grandTotal.toFixed(2)}`;
       checkoutBtn.disabled = false;
+      updateCartIngredientsSummary();
     }
 
-    // --- CHECKOUT & DEDUCTIONS ---
+    function calculateCartIngredients() {
+      let total = { milkMl: 0, beansG: 0, cups: 0, matchaG: 0, sidesPortions: 0 };
+      STATE.cart.forEach(item => {
+        const q = item.qty;
+        if (item.recipe.milkMl) total.milkMl += (item.recipe.milkMl * q);
+        if (item.recipe.beansG) total.beansG += (item.recipe.beansG * q);
+        if (item.recipe.cups) total.cups += (item.recipe.cups * q);
+        if (item.recipe.matchaG) total.matchaG += (item.recipe.matchaG * q);
+        if (item.recipe.sidesPortions) total.sidesPortions += (item.recipe.sidesPortions * q);
+      });
+      return total;
+    }
+
+    function updateCartIngredientsSummary() {
+      const req = calculateCartIngredients();
+      document.getElementById('req-milk-summary').innerText = `${req.milkMl} ml Milk`;
+
+      const pills = document.getElementById('req-ingredients-pills');
+      pills.innerHTML = `
+        <span class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-700 font-mono">${req.beansG}g Beans</span>
+        <span class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-700 font-mono">${req.cups} Cups</span>
+        ${req.matchaG > 0 ? `<span class="px-1.5 py-0.5 bg-brandMatcha/20 text-brandMatcha font-mono rounded">${req.matchaG}g Matcha</span>` : ''}
+      `;
+    }
+
+    // --- CHECKOUT & STOCK DEDUCTIONS ---
     function processCheckout() {
       if (STATE.cart.length === 0) return;
 
       const req = calculateCartIngredients();
       const inv = STATE.inventory;
-      const totalAvailableMilkMl = (inv.unopenedMilkBoxes * 1000) + inv.activeMilkMl;
+      const totalAvailableMilkMl = (inv.unopenedMilkBoxes * 1000) + getTotalActiveMilkMl();
 
-      // Pre-check ingredient stock availability
-      if (inv.paperCups8oz < req.cups) {
-        showToast(`Out of 8oz Cups! Need: ${req.cups}, Stock: ${inv.paperCups8oz}`, 'error');
+      // Stock checks
+      if (inv.paperCups < req.cups) {
+        showToast(`Out of Cups! Need: ${req.cups}, Stock: ${inv.paperCups}`, 'error');
         return;
       }
       if (inv.coffeeBeansG < req.beansG) {
-        showToast(`Out of Coffee Beans! Need: ${req.beansG}g, Stock: ${inv.coffeeBeansG}g`, 'error');
+        showToast(`Out of Beans! Need: ${req.beansG}g, Stock: ${inv.coffeeBeansG}g`, 'error');
         return;
       }
       if (req.milkMl > totalAvailableMilkMl) {
-        showToast(`Out of Milk! Need: ${req.milkMl}ml, Total: ${totalAvailableMilkMl}ml`, 'error');
+        showToast(`Out of Milk! Need: ${req.milkMl}ml, Stock: ${totalAvailableMilkMl}ml`, 'error');
         return;
       }
-      if (inv.chocolateSyrupG < req.chocSyrupG) {
-        showToast(`Out of Chocolate Syrup! Need: ${req.chocSyrupG}g, Stock: ${inv.chocolateSyrupG}g`, 'error');
+      if (inv.matchaG < req.matchaG) {
+        showToast(`Out of Matcha/Ube! Need: ${req.matchaG}g, Stock: ${inv.matchaG}g`, 'error');
         return;
       }
-      if (inv.condensedMilkG < req.condensedMilkG) {
-        showToast(`Out of Condensed Milk! Need: ${req.condensedMilkG}g, Stock: ${inv.condensedMilkG}g`, 'error');
+      if (inv.sidesPortions < req.sidesPortions) {
+        showToast(`Out of Sides/Pizza stock!`, 'error');
         return;
       }
 
-      // Deduce stock
-      inv.paperCups8oz -= req.cups;
+      // Deduce non-milk stock
+      inv.paperCups -= req.cups;
       inv.coffeeBeansG -= req.beansG;
-      inv.chocolateSyrupG -= req.chocSyrupG;
-      inv.condensedMilkG -= req.condensedMilkG;
+      inv.matchaG -= req.matchaG;
+      inv.sidesPortions -= req.sidesPortions;
 
-      // Milk Roll-over
+      // Sequential Dual Carton Milk Deduction
       let milkToDeduct = req.milkMl;
       if (milkToDeduct > 0) {
-        if (inv.activeMilkMl >= milkToDeduct) {
-          inv.activeMilkMl -= milkToDeduct;
-        } else {
-          const overflow = milkToDeduct - inv.activeMilkMl;
+        for (let carton of inv.activeCartons) {
+          if (carton.ml > 0 && milkToDeduct > 0) {
+            if (carton.ml >= milkToDeduct) {
+              carton.ml -= milkToDeduct;
+              milkToDeduct = 0;
+            } else {
+              milkToDeduct -= carton.ml;
+              carton.ml = 0;
+            }
+          }
+        }
+
+        // Clean up empty cartons if another carton has milk or if reserve exists
+        inv.activeCartons = inv.activeCartons.filter(c => c.ml > 0);
+
+        // If remaining milk was needed and all open cartons emptied, open reserve
+        while (milkToDeduct > 0 && inv.unopenedMilkBoxes > 0) {
           inv.unopenedMilkBoxes -= 1;
-          inv.activeMilkMl = 1000 - overflow;
-          addLog('Auto Roll-over Box', '-1 Box', '1000 ml', 'Restock', 'Active carton ran out');
-          showToast('Opened 1 new milk box from reserve!', 'info');
+          const openMl = Math.min(1000, 1000 - milkToDeduct);
+          milkToDeduct -= (1000 - openMl);
+          inv.activeCartons.push({ id: `carton_${Date.now()}`, ml: openMl });
+          addLog('Opened New Carton', '-1 Box', `${openMl} ml`, 'Restock', 'Auto-opened on checkout');
+          showToast('Opened 1 new 1L milk carton from reserve!', 'info');
+        }
+
+        // Always ensure at least 1 carton object exists in active list
+        if (inv.activeCartons.length === 0) {
+          inv.activeCartons.push({ id: `carton_${Date.now()}`, ml: 0 });
         }
       }
 
-      const orderNames = STATE.cart.map(c => `${c.qty}x ${c.name}`).join(', ');
-      const deductedSummary = `${req.cups} Cup, ${req.beansG}g Beans${req.milkMl > 0 ? `, ${req.milkMl}ml Milk` : ''}${req.chocSyrupG > 0 ? `, ${req.chocSyrupG}g Choc` : ''}${req.condensedMilkG > 0 ? `, ${req.condensedMilkG}g Cond.` : ''}`;
+      const orderSummaryStr = STATE.cart.map(c => `${c.qty}x ${c.name}`).join(', ');
+      const deductedSummary = `${req.cups > 0 ? req.cups + ' Cup, ' : ''}${req.beansG > 0 ? req.beansG + 'g Beans, ' : ''}${req.milkMl > 0 ? req.milkMl + 'ml Milk' : ''}`;
 
-      addLog(`Order (${orderNames})`, deductedSummary, `${inv.activeMilkMl} ml`, 'Deduction', 'POS Checkout Success');
+      addLog(`Order (${orderSummaryStr})`, deductedSummary, `${getTotalActiveMilkMl()} ml`, 'Deduction', `Paid ${document.getElementById('cart-total').innerText}`);
 
       playBeep('success');
-      showToast(`Order complete! Total: ${document.getElementById('cart-total').innerText}`, 'success');
+      showToast(`Order Complete! Paid: ${document.getElementById('cart-total').innerText}`, 'success');
 
       clearCart();
       saveState();
       updateInventoryUI();
-      renderUnopenedBoxes();
     }
 
-    // --- INVENTORY MANIPULATION ---
+    // --- INVENTORY ADJUSTMENTS ---
     function quickAdjustVolume(deltaMl, reason = 'Variance') {
-      let newMl = STATE.inventory.activeMilkMl + deltaMl;
+      const activeCartons = STATE.inventory.activeCartons;
+      if (!activeCartons || activeCartons.length === 0) return;
+
+      // Adjust the first active non-zero carton or default to carton 0
+      let target = activeCartons.find(c => c.ml > 0) || activeCartons[0];
+      let newMl = target.ml + deltaMl;
       if (newMl < 0) newMl = 0;
       if (newMl > 1000) newMl = 1000;
 
-      const diff = newMl - STATE.inventory.activeMilkMl;
-      STATE.inventory.activeMilkMl = newMl;
+      const diff = newMl - target.ml;
+      target.ml = newMl;
 
       const sign = diff >= 0 ? `+${diff}` : `${diff}`;
-      addLog('Variance Calibration', `${sign} ml Milk`, `${STATE.inventory.activeMilkMl} ml`, 'Variance', reason);
+      addLog('Milk Calibration', `${sign} ml Milk`, `${getTotalActiveMilkMl()} ml`, 'Variance', reason);
 
       saveState();
       updateInventoryUI();
-      showToast(`Milk calibrated by ${sign}ml`, 'info');
+      showToast(`Milk adjusted by ${sign}ml`, 'info');
     }
 
-    function forceOpenNewBox() {
-      if (STATE.inventory.unopenedMilkBoxes <= 0) {
-        showToast('No unopened boxes available in reserve!', 'error');
+    function openSecondCartonEarly() {
+      const inv = STATE.inventory;
+      if (inv.unopenedMilkBoxes <= 0) {
+        showToast('No unopened reserve boxes available!', 'error');
         return;
       }
-      STATE.inventory.unopenedMilkBoxes -= 1;
-      STATE.inventory.activeMilkMl = 1000;
+      if (inv.activeCartons.length >= 2 && inv.activeCartons[1] && inv.activeCartons[1].ml > 0) {
+        showToast('2 cartons are already open!', 'error');
+        return;
+      }
 
-      addLog('Manual Open Box', '-1 Box', '1000 ml', 'Restock', 'Barista opened new 1L carton');
+      inv.unopenedMilkBoxes -= 1;
+      if (inv.activeCartons.length < 2) {
+        inv.activeCartons.push({ id: `carton_${Date.now()}`, ml: 1000 });
+      } else {
+        inv.activeCartons[1].ml = 1000;
+      }
+
+      addLog('Early Open 2nd Box', '-1 Box', `${getTotalActiveMilkMl()} ml`, 'Restock', 'Opened 2nd box early');
       saveState();
       updateInventoryUI();
-      renderUnopenedBoxes();
-      showToast('Opened new 1L Milk Box into active container.', 'success');
+      showToast('Opened 2nd 1L Milk Carton early into active rotation!', 'success');
+    }
+
+    function discardCarton(index) {
+      if (!STATE.inventory.activeCartons[index]) return;
+      STATE.inventory.activeCartons.splice(index, 1);
+      if (STATE.inventory.activeCartons.length === 0) {
+        STATE.inventory.activeCartons.push({ id: `carton_${Date.now()}`, ml: 0 });
+      }
+      addLog('Discard Carton', 'Carton Removed', `${getTotalActiveMilkMl()} ml`, 'Variance', `Discarded empty carton #${index + 1}`);
+      saveState();
+      updateInventoryUI();
+      showToast(`Discarded carton #${index + 1}`, 'info');
     }
 
     function restockMilkBox() {
       STATE.inventory.unopenedMilkBoxes += 6;
-      addLog('Restock', '+6 Boxes', `${STATE.inventory.unopenedMilkBoxes} Boxes`, 'Restock', 'Added 6 1L cartons');
+      addLog('Restock', '+6 Cartons', `${STATE.inventory.unopenedMilkBoxes} Boxes`, 'Restock', 'Added 6 1L milk cartons');
       saveState();
       updateInventoryUI();
-      renderUnopenedBoxes();
-      showToast('Added +6 unopened 1L milk boxes!', 'success');
+      showToast('Restocked +6 1L milk cartons!', 'success');
     }
 
     function restockIngredient(key, amount) {
       if (STATE.inventory[key] !== undefined) {
         STATE.inventory[key] += amount;
-        addLog('Restock', `+${amount}`, `${STATE.inventory.activeMilkMl} ml`, 'Restock', `Restocked ${key}`);
+        addLog('Restock', `+${amount}`, `${getTotalActiveMilkMl()} ml`, 'Restock', `Restocked ${key}`);
         saveState();
         updateInventoryUI();
         showToast(`Restocked +${amount}!`, 'success');
@@ -951,28 +882,85 @@
     }
 
     function resetAllStockDefaults() {
-      STATE.inventory = { ...DEFAULT_INVENTORY };
+      STATE.inventory = {
+        activeCartons: [
+          { id: 'carton_1', ml: 650 },
+          { id: 'carton_2', ml: 0 }
+        ],
+        unopenedMilkBoxes: 12,
+        coffeeBeansG: 2500,
+        paperCups: 200,
+        matchaG: 800,
+        sidesPortions: 50,
+        cartonCapMl: 1000
+      };
       saveState();
       updateInventoryUI();
-      renderUnopenedBoxes();
-      showToast('Reset all inventory stock levels to defaults', 'info');
+      showToast('Reset all inventory stock levels to default', 'info');
     }
 
     function updateInventoryUI() {
-      const activeMl = STATE.inventory.activeMilkMl;
-      const pct = Math.round((activeMl / STATE.inventory.cartonCapMl) * 100);
+      const activeCartons = STATE.inventory.activeCartons || [];
+      const totalActiveMl = getTotalActiveMilkMl();
 
-      document.getElementById('carton-liquid-fill').style.height = `${pct}%`;
-      document.getElementById('carton-percent-text').innerText = `${pct}%`;
-      document.getElementById('carton-ml-text').innerText = `${activeMl} ml remaining`;
-      document.getElementById('header-milk-status').innerText = `${activeMl}ml (${pct}%)`;
+      document.getElementById('header-milk-status').innerText = `${totalActiveMl}ml Total`;
+      document.getElementById('active-total-ml-badge').innerText = `Total Open Milk: ${totalActiveMl}ml`;
 
-      document.getElementById('unopened-count-badge').innerText = `${STATE.inventory.unopenedMilkBoxes} Boxes Reserve`;
+      // Render 2 Carton Cards
+      const cartonContainer = document.getElementById('active-cartons-container');
+      cartonContainer.innerHTML = '';
 
+      for (let i = 0; i < 2; i++) {
+        const carton = activeCartons[i] || { ml: 0 };
+        const pct = Math.round((carton.ml / 1000) * 100);
+        const isLow = carton.ml > 0 && carton.ml <= 200;
+        const isEmpty = carton.ml === 0;
+
+        const card = document.createElement('div');
+        card.className = `relative p-2 rounded-xl border flex flex-col items-center justify-between shadow-sm transition ${isLow ? 'border-amber-400 bg-amber-50/40' : isEmpty ? 'border-stone-200 bg-stone-50' : 'border-stone-300 bg-white'}`;
+
+        let statusBadge = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${isEmpty ? 'bg-stone-200 text-stone-600' : isLow ? 'bg-amber-200 text-amber-900 animate-pulse' : 'bg-emerald-100 text-emerald-800'}">Box #${i + 1}: ${isEmpty ? 'Empty/Closed' : isLow ? 'Low (≤20%)' : 'In Use'}</span>`;
+
+        card.innerHTML = `
+          <div class="w-full flex justify-between items-center mb-1">
+            ${statusBadge}
+            ${!isEmpty && carton.ml === 0 ? `<button onclick="discardCarton(${i})" class="text-[9px] text-rose-600 font-bold hover:underline">Discard</button>` : ''}
+          </div>
+
+          <div class="relative w-24 h-28 bg-stone-100 border border-stone-300 rounded-xl flex flex-col justify-end overflow-hidden shadow-inner my-1">
+            <div class="liquid-wave w-full relative" style="height: ${pct}%;">
+              <div class="absolute inset-x-0 top-0 h-0.5 bg-white/70"></div>
+            </div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-stone-900 font-bold drop-shadow-sm">
+              <div class="text-xl font-extrabold tracking-tight text-brandOliveDark">${pct}%</div>
+              <div class="text-[9px] font-mono font-bold bg-white/90 text-stone-800 px-1.5 py-0.5 rounded-full border border-stone-300 shadow-sm mt-0.5">
+                ${carton.ml} ml
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[9px] text-stone-500 font-mono font-semibold text-center mt-1">
+            ${isEmpty ? 'Ready for next carton' : `${carton.ml}ml remaining`}
+          </div>
+        `;
+        cartonContainer.appendChild(card);
+      }
+
+      // Open 2nd box button state
+      const openSecondBtn = document.getElementById('open-second-box-btn');
+      const secondCartonMl = activeCartons[1] ? activeCartons[1].ml : 0;
+
+      if (STATE.inventory.unopenedMilkBoxes <= 0 || secondCartonMl > 0) {
+        openSecondBtn.disabled = true;
+      } else {
+        openSecondBtn.disabled = false;
+      }
+
+      document.getElementById('stock-milk-boxes-text').innerText = `${STATE.inventory.unopenedMilkBoxes} boxes`;
       document.getElementById('stock-beans-text').innerText = `${Number(STATE.inventory.coffeeBeansG).toLocaleString()} g`;
-      document.getElementById('stock-cups-text').innerText = `${STATE.inventory.paperCups8oz} units`;
-      document.getElementById('stock-choc-text').innerText = `${Number(STATE.inventory.chocolateSyrupG).toLocaleString()} g`;
-      document.getElementById('stock-condensed-text').innerText = `${Number(STATE.inventory.condensedMilkG).toLocaleString()} g`;
+      document.getElementById('stock-cups-text').innerText = `${STATE.inventory.paperCups} units`;
+      document.getElementById('stock-matcha-text').innerText = `${Number(STATE.inventory.matchaG).toLocaleString()} g`;
+      document.getElementById('stock-sides-text').innerText = `${STATE.inventory.sidesPortions} portions`;
     }
 
     function renderUnopenedBoxes() {
@@ -981,30 +969,34 @@
 
       const count = STATE.inventory.unopenedMilkBoxes;
       if (count === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-1 text-[10px] text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No unopened milk cartons remaining!</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-1 text-[10px] text-rose-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No reserve milk cartons remaining!</div>`;
         return;
       }
 
       for (let i = 0; i < count; i++) {
         const box = document.createElement('div');
-        box.className = "bg-stone-800/80 border border-stone-700 rounded p-1 flex flex-col items-center justify-center text-center shadow";
+        box.className = "bg-white border border-stone-300 rounded p-1 flex flex-col items-center justify-center text-center shadow-sm";
         box.innerHTML = `
-          <i class="fa-solid fa-box text-crema text-xs"></i>
-          <span class="text-[9px] font-mono text-stone-300">1L Box</span>
+          <i class="fa-solid fa-box text-brandOlive text-xs"></i>
+          <span class="text-[9px] font-mono text-stone-600 font-bold">1L Box</span>
         `;
         grid.appendChild(box);
       }
     }
 
-    // --- DIRECT STOCK EDIT MODAL ---
+    // --- MODALS & DATA EDITORS ---
     function openStockEditModal() {
       const inv = STATE.inventory;
-      document.getElementById('edit-stock-active-milk').value = inv.activeMilkMl;
+      const c1 = inv.activeCartons && inv.activeCartons[0] ? inv.activeCartons[0].ml : 0;
+      const c2 = inv.activeCartons && inv.activeCartons[1] ? inv.activeCartons[1].ml : 0;
+
+      document.getElementById('edit-stock-carton1').value = c1;
+      document.getElementById('edit-stock-carton2').value = c2;
       document.getElementById('edit-stock-boxes').value = inv.unopenedMilkBoxes;
       document.getElementById('edit-stock-beans').value = inv.coffeeBeansG;
-      document.getElementById('edit-stock-cups').value = inv.paperCups8oz;
-      document.getElementById('edit-stock-choc').value = inv.chocolateSyrupG;
-      document.getElementById('edit-stock-condensed').value = inv.condensedMilkG;
+      document.getElementById('edit-stock-cups').value = inv.paperCups;
+      document.getElementById('edit-stock-matcha').value = inv.matchaG;
+      document.getElementById('edit-stock-sides').value = inv.sidesPortions;
       document.getElementById('stock-modal').classList.remove('hidden');
     }
 
@@ -1013,24 +1005,30 @@
     }
 
     function saveStockEditModal() {
-      STATE.inventory.activeMilkMl = parseInt(document.getElementById('edit-stock-active-milk').value, 10) || 0;
+      const c1Ml = parseInt(document.getElementById('edit-stock-carton1').value, 10) || 0;
+      const c2Ml = parseInt(document.getElementById('edit-stock-carton2').value, 10) || 0;
+
+      STATE.inventory.activeCartons = [
+        { id: 'carton_1', ml: Math.min(1000, c1Ml) },
+        { id: 'carton_2', ml: Math.min(1000, c2Ml) }
+      ];
+
       STATE.inventory.unopenedMilkBoxes = parseInt(document.getElementById('edit-stock-boxes').value, 10) || 0;
       STATE.inventory.coffeeBeansG = parseInt(document.getElementById('edit-stock-beans').value, 10) || 0;
-      STATE.inventory.paperCups8oz = parseInt(document.getElementById('edit-stock-cups').value, 10) || 0;
-      STATE.inventory.chocolateSyrupG = parseInt(document.getElementById('edit-stock-choc').value, 10) || 0;
-      STATE.inventory.condensedMilkG = parseInt(document.getElementById('edit-stock-condensed').value, 10) || 0;
+      STATE.inventory.paperCups = parseInt(document.getElementById('edit-stock-cups').value, 10) || 0;
+      STATE.inventory.matchaG = parseInt(document.getElementById('edit-stock-matcha').value, 10) || 0;
+      STATE.inventory.sidesPortions = parseInt(document.getElementById('edit-stock-sides').value, 10) || 0;
 
-      addLog('Manual Stock Override', 'Custom', `${STATE.inventory.activeMilkMl} ml`, 'Calibration', 'Direct manager override');
+      addLog('Direct Stock Adjustment', 'Custom', `${getTotalActiveMilkMl()} ml`, 'Calibration', 'Manager override');
       saveState();
       updateInventoryUI();
-      renderUnopenedBoxes();
       closeStockEditModal();
-      showToast('Stock levels saved successfully!', 'success');
+      showToast('Stock quantities saved!', 'success');
     }
 
-    // --- MILK CALIBRATION MODAL ---
     function openCalibrationModal() {
-      document.getElementById('calib-exact-ml').value = STATE.inventory.activeMilkMl;
+      const c1 = STATE.inventory.activeCartons && STATE.inventory.activeCartons[0] ? STATE.inventory.activeCartons[0].ml : 0;
+      document.getElementById('calib-exact-ml').value = c1;
       document.getElementById('calibration-modal').classList.remove('hidden');
     }
 
@@ -1039,6 +1037,7 @@
     }
 
     function applyCalibrationModal() {
+      const idx = parseInt(document.getElementById('calib-carton-target').value, 10) || 0;
       const targetMl = parseInt(document.getElementById('calib-exact-ml').value, 10);
       const reason = document.getElementById('calib-reason').value;
 
@@ -1047,142 +1046,60 @@
         return;
       }
 
-      const diff = targetMl - STATE.inventory.activeMilkMl;
-      STATE.inventory.activeMilkMl = targetMl;
+      if (!STATE.inventory.activeCartons[idx]) {
+        STATE.inventory.activeCartons[idx] = { id: `carton_${Date.now()}`, ml: 0 };
+      }
+
+      const diff = targetMl - STATE.inventory.activeCartons[idx].ml;
+      STATE.inventory.activeCartons[idx].ml = targetMl;
 
       const sign = diff >= 0 ? `+${diff}` : `${diff}`;
-      addLog('Scale Recalibration', `${sign} ml Milk`, `${STATE.inventory.activeMilkMl} ml`, 'Calibration', reason);
+      addLog('Exact Calibration', `Box #${idx + 1} ${sign} ml`, `${getTotalActiveMilkMl()} ml`, 'Calibration', reason);
 
       saveState();
       updateInventoryUI();
       closeCalibrationModal();
-      showToast(`Calibrated milk box to ${targetMl}ml`, 'success');
+      showToast(`Carton #${idx + 1} calibrated to ${targetMl}ml`, 'success');
     }
 
-    // --- MENU ITEM MODAL (ADD / EDIT / DELETE) ---
-    function openItemModal(itemId = null) {
-      const deleteBtn = document.getElementById('delete-item-btn');
-      if (itemId) {
-        const item = STATE.menu.find(m => m.id === itemId);
-        if (!item) return;
-        document.getElementById('item-modal-title').innerHTML = `<i class="fa-solid fa-pen text-crema"></i> Edit Drink Recipe`;
-        document.getElementById('edit-item-id').value = item.id;
-        document.getElementById('edit-item-name').value = item.name;
-        document.getElementById('edit-item-price').value = item.price;
-        document.getElementById('edit-item-desc').value = item.desc;
-        document.getElementById('edit-item-beans').value = item.recipe.beansG;
-        document.getElementById('edit-item-milk').value = item.recipe.milkMl;
-        document.getElementById('edit-item-choc').value = item.recipe.chocSyrupG;
-        document.getElementById('edit-item-condensed').value = item.recipe.condensedMilkG;
-        deleteBtn.classList.remove('hidden');
-      } else {
-        document.getElementById('item-modal-title').innerHTML = `<i class="fa-solid fa-plus text-crema"></i> Add Custom Drink`;
-        document.getElementById('edit-item-id').value = '';
-        document.getElementById('edit-item-name').value = '';
-        document.getElementById('edit-item-price').value = '4.00';
-        document.getElementById('edit-item-desc').value = 'Custom Espresso Beverage';
-        document.getElementById('edit-item-beans').value = '9';
-        document.getElementById('edit-item-milk').value = '118';
-        document.getElementById('edit-item-choc').value = '0';
-        document.getElementById('edit-item-condensed').value = '0';
-        deleteBtn.classList.add('hidden');
-      }
-      document.getElementById('item-modal').classList.remove('hidden');
-    }
-
-    function closeItemModal() {
-      document.getElementById('item-modal').classList.add('hidden');
-    }
-
-    function saveMenuItemModal() {
-      const id = document.getElementById('edit-item-id').value;
-      const name = document.getElementById('edit-item-name').value.trim();
-      const price = parseFloat(document.getElementById('edit-item-price').value) || 0;
-      const desc = document.getElementById('edit-item-desc').value.trim();
-      const beansG = parseInt(document.getElementById('edit-item-beans').value, 10) || 0;
-      const milkMl = parseInt(document.getElementById('edit-item-milk').value, 10) || 0;
-      const chocSyrupG = parseInt(document.getElementById('edit-item-choc').value, 10) || 0;
-      const condensedMilkG = parseInt(document.getElementById('edit-item-condensed').value, 10) || 0;
-
-      if (!name) {
-        showToast('Please enter a drink name', 'error');
-        return;
-      }
-
-      if (id) {
-        // Edit existing
-        const item = STATE.menu.find(m => m.id === id);
-        if (item) {
-          item.name = name;
-          item.price = price;
-          item.desc = desc;
-          item.recipe = { beansG, milkMl, chocSyrupG, condensedMilkG, cups: 1 };
-        }
-      } else {
-        // Create new
-        const newId = 'custom_' + Date.now();
-        STATE.menu.push({
-          id: newId,
-          name,
-          price,
-          desc,
-          icon: 'fa-mug-hot',
-          recipe: { beansG, milkMl, chocSyrupG, condensedMilkG, cups: 1 }
-        });
-      }
-
-      saveState();
-      renderMenu();
-      renderMenuEditor();
-      closeItemModal();
-      showToast('Menu recipe saved!', 'success');
-    }
-
-    function deleteMenuItem() {
-      const id = document.getElementById('edit-item-id').value;
-      if (!id) return;
-
-      STATE.menu = STATE.menu.filter(m => m.id !== id);
-      STATE.cart = STATE.cart.filter(c => c.id !== id);
-
-      saveState();
-      renderMenu();
-      renderMenuEditor();
-      updateCartUI();
-      closeItemModal();
-      showToast('Drink item removed', 'info');
-    }
-
-    // --- LOGS ---
-    function addLog(trigger, deducted, remainingMilk, type, note) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      STATE.logs.unshift({ time: timeStr, trigger, deducted, remainingMilk, type, note });
+    // --- LOGS AUDIT TRAIL ---
+    function addLog(trigger, deducted, remainingMilk, type, note = '') {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      STATE.logs.unshift({
+        time: timeStr,
+        trigger,
+        deducted,
+        remainingMilk,
+        type,
+        note
+      });
+      if (STATE.logs.length > 50) STATE.logs.pop();
       saveState();
       renderLogs();
     }
 
     function renderLogs() {
-      const tbody = document.getElementById('logs-table-body');
+      const tbody = document.getElementById('audit-log-table-body');
       tbody.innerHTML = '';
+
+      if (STATE.logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-stone-400">No logs recorded yet.</td></tr>`;
+        return;
+      }
 
       STATE.logs.forEach(log => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-stone-900/60 transition";
-
-        let typeClass = "bg-stone-800 text-stone-300";
-        if (log.type === 'Deduction') typeClass = "bg-amber-950/40 text-amber-300 border border-amber-800/40";
-        if (log.type === 'Variance') typeClass = "bg-rose-950/40 text-rose-300 border border-rose-800/40";
-        if (log.type === 'Restock') typeClass = "bg-emerald-950/40 text-emerald-300 border border-emerald-800/40";
-
+        tr.className = "hover:bg-stone-50 transition";
         tr.innerHTML = `
-          <td class="p-2 pl-3 text-stone-400">${log.time}</td>
-          <td class="p-2 font-semibold text-stone-200">${log.trigger}</td>
-          <td class="p-2 font-bold text-stone-300">${log.deducted}</td>
-          <td class="p-2 text-crema">${log.remainingMilk}</td>
-          <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${typeClass}">${log.type}</span></td>
-          <td class="p-2 pr-3 text-stone-400 font-sans text-[10px]">${log.note}</td>
+          <td class="p-2 font-mono text-stone-500">${log.time}</td>
+          <td class="p-2 font-bold text-stone-800">${log.trigger} <span class="block text-[9px] font-normal text-stone-500">${log.note}</span></td>
+          <td class="p-2 font-mono text-amber-700">${log.deducted}</td>
+          <td class="p-2 font-mono font-bold text-brandOlive">${log.remainingMilk}</td>
+          <td class="p-2">
+            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${log.type === 'Deduction' ? 'bg-rose-100 text-rose-800' : log.type === 'Restock' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${log.type}
+            </span>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -1194,26 +1111,54 @@
       renderLogs();
     }
 
-    // --- TOAST NOTIFICATIONS ---
-    function showToast(msg, type = 'info') {
-      const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toast-message');
-      const toastIcon = document.getElementById('toast-icon');
+    // --- AUDIO & TOAST UTILITIES ---
+    function playBeep(type = 'add') {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-      toastMsg.innerText = msg;
-
-      if (type === 'success') {
-        toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
-      } else if (type === 'error') {
-        toastIcon.className = "fa-solid fa-circle-xmark text-rose-400";
-      } else {
-        toastIcon.className = "fa-solid fa-circle-info text-crema";
+        if (type === 'add') {
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.08);
+        } else if (type === 'success') {
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        }
+      } catch (e) {
+        // AudioContext disabled by browser policy until interaction
       }
+    }
 
-      toast.classList.remove('translate-y-16', 'opacity-0', 'pointer-events-none');
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const bgClass = type === 'error' ? 'bg-rose-900 text-white border-rose-700' : type === 'success' ? 'bg-emerald-900 text-white border-emerald-700' : 'bg-stone-900 text-white border-stone-700';
+
+      toast.className = `px-3 py-2 rounded-xl border ${bgClass} text-xs shadow-xl flex items-center gap-2 pointer-events-auto transform transition duration-200 translate-y-2 opacity-0`;
+      toast.innerHTML = `
+        <i class="fa-solid ${type === 'error' ? 'fa-circle-xmark text-rose-400' : type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-amber-400'}"></i>
+        <span>${msg}</span>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
       setTimeout(() => {
-        toast.classList.add('translate-y-16', 'opacity-0', 'pointer-events-none');
-      }, 2500);
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 200);
+      }, 3000);
     }
   </script>
 </body>
