@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-stone-900 text-stone-100 font-sans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brew & Batch POS - Exact Recipe & Liquid Inventory</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            espresso: '#1c130e',
+            roast: '#2c1d11',
+            crema: '#d4a373',
+            oat: '#fefae0',
+            latte: '#faedcd',
+            warmgray: '#e7e5e4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1c130e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #443327;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4a373;
+    }
+    .liquid-wave {
+      background: linear-gradient(180deg, rgba(254, 250, 224, 0.95) 0%, rgba(212, 163, 115, 0.85) 100%);
+      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col md:flex-row overflow-hidden antialiased select-none">
+
+  <!-- NAVIGATION / SIDEBAR -->
+  <aside class="w-full md:w-20 lg:w-64 bg-stone-950 border-r border-stone-800/60 flex flex-col justify-between shrink-0">
+    <div>
+      <!-- Brand Header -->
+      <div class="p-4 lg:p-6 flex items-center space-x-3 border-b border-stone-800/60">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-crema to-amber-700 flex items-center justify-center text-stone-950 shadow-lg shadow-crema/10 font-bold text-xl">
+          <i class="fa-solid fa-mug-hot"></i>
+        </div>
+        <div class="hidden lg:block">
+          <h1 class="font-bold text-stone-100 tracking-wide text-base">Brew & Batch</h1>
+          <p class="text-[11px] text-stone-400">Recipe Inventory POS</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="p-3 space-y-1">
+        <button id="nav-pos" onclick="switchTab('pos')" class="w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 bg-crema text-stone-950 font-semibold shadow-md">
+          <i class="fa-solid fa-cash-register text-lg w-6 text-center"></i>
+          <span class="hidden lg:inline text-sm">Register / POS</span>
+        </button>
+        <button id="nav-inventory" onclick="switchTab('inventory')" class="w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 text-stone-400 hover:text-stone-100 hover:bg-stone-900 font-medium">
+          <i class="fa-solid fa-boxes-stacked text-lg w-6 text-center"></i>
+          <span class="hidden lg:inline text-sm">Ingredient Stock</span>
+          <span id="low-stock-badge" class="hidden lg:inline-block ml-auto bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-bold">Alert</span>
+        </button>
+        <button id="nav-logs" onclick="switchTab('logs')" class="w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 text-stone-400 hover:text-stone-100 hover:bg-stone-900 font-medium">
+          <i class="fa-solid fa-receipt text-lg w-6 text-center"></i>
+          <span class="hidden lg:inline text-sm">Audit Log</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Active Shift Quick Summary -->
+    <div class="hidden lg:block p-4 m-3 rounded-xl bg-stone-900/80 border border-stone-800/80">
+      <div class="flex items-center justify-between text-xs text-stone-400 mb-2">
+        <span>8oz Hot Drinks Shift</span>
+        <span class="flex h-2 w-2 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+      </div>
+      <div class="text-xs text-stone-300">Cups Sold: <span id="shift-cups-sold" class="text-crema font-mono font-bold">0</span></div>
+      <div class="text-xs text-stone-400 mt-1">Milk Poured: <span id="shift-milk-poured" class="text-stone-200 font-mono">0 ml</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-stone-900">
+
+    <!-- ================= VIEW 1: POS REGISTER ================= -->
+    <section id="view-pos" class="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+      <!-- Menu Catalog (Left Column) -->
+      <div class="flex-1 flex flex-col overflow-hidden border-r border-stone-800/60">
+        <!-- Banner Header -->
+        <div class="p-4 bg-stone-950/40 border-b border-stone-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="font-bold text-stone-100 text-base flex items-center gap-2">
+              <i class="fa-solid fa-fire-flame-curved text-amber-500"></i> Hot Drinks (8oz Cup Menu)
+            </h2>
+            <p class="text-xs text-stone-400">Recipes auto-deduct exact beans, milk, syrups, and 8oz cups</p>
+          </div>
+          <div class="text-xs font-mono bg-stone-900 border border-stone-800 px-3 py-1.5 rounded-lg text-crema flex items-center gap-2">
+            <i class="fa-solid fa-glass-water"></i> Active Box: <span id="pos-active-milk-display" class="font-bold">650ml (65%)</span>
+          </div>
+        </div>
+
+        <!-- Menu Grid -->
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4" id="pos-menu-grid">
+            <!-- Dynamically rendered menu items with exact recipes -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Cart & Checkout (Right Column) -->
+      <div class="w-full lg:w-96 bg-stone-950 flex flex-col border-t lg:border-t-0 lg:border-l border-stone-800/60 shrink-0 h-96 lg:h-full">
+        <div class="p-4 border-b border-stone-800/60 flex items-center justify-between">
+          <h2 class="font-bold text-stone-200 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-basket-shopping text-crema"></i> Current Order
+          </h2>
+          <button onclick="clearCart()" class="text-xs text-stone-500 hover:text-rose-400 transition">Clear Cart</button>
+        </div>
+
+        <!-- Cart Items list -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cart-items-container">
+          <div id="cart-empty-state" class="h-full flex flex-col items-center justify-center text-center text-stone-600">
+            <i class="fa-solid fa-mug-saucer text-4xl mb-3"></i>
+            <p class="text-xs font-semibold text-stone-400">No hot drinks in cart</p>
+            <p class="text-[11px] text-stone-600 mt-0.5">Select a drink from the menu to start</p>
+          </div>
+        </div>
+
+        <!-- Real-time Recipe Ingredient Impact Panel -->
+        <div id="cart-impact-panel" class="hidden mx-4 my-2 p-3 rounded-xl bg-stone-900 border border-stone-800 text-xs">
+          <div class="text-[11px] font-bold text-crema mb-1.5 flex justify-between items-center">
+            <span>Required Raw Ingredients:</span>
+            <i class="fa-solid fa-flask text-xs"></i>
+          </div>
+          <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] font-mono text-stone-300">
+            <div class="flex justify-between"><span>8oz Cups:</span><span id="impact-cups" class="text-stone-100 font-bold">0</span></div>
+            <div class="flex justify-between"><span>Beans:</span><span id="impact-beans" class="text-amber-200 font-bold">0 g</span></div>
+            <div class="flex justify-between"><span>Milk:</span><span id="impact-milk" class="text-crema font-bold">0 ml</span></div>
+            <div class="flex justify-between"><span>Choc Syrup:</span><span id="impact-choc" class="text-stone-300 font-bold">0 g</span></div>
+            <div class="flex justify-between col-span-2"><span>Condensed Milk:</span><span id="impact-condensed" class="text-amber-100 font-bold">0 g</span></div>
+          </div>
+        </div>
+
+        <!-- Checkout Totals & Action -->
+        <div class="p-4 border-t border-stone-800/60 bg-stone-950 space-y-3">
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between text-stone-400">
+              <span>Subtotal</span>
+              <span id="cart-subtotal" class="font-mono text-stone-200">$0.00</span>
+            </div>
+            <div class="flex justify-between text-stone-400">
+              <span>Tax (8%)</span>
+              <span id="cart-tax" class="font-mono text-stone-200">$0.00</span>
+            </div>
+            <div class="flex justify-between text-base font-bold text-stone-100 pt-2 border-t border-stone-800/80">
+              <span>Total</span>
+              <span id="cart-total" class="font-mono text-crema">$0.00</span>
+            </div>
+          </div>
+
+          <button id="checkout-btn" onclick="processCheckout()" disabled class="w-full py-3 bg-crema disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 font-bold rounded-xl shadow-lg transition duration-200 hover:bg-amber-400 active:scale-[0.99] flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Complete Order & Deduct Stock</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: INVENTORY & MILK MONITOR ================= -->
+    <section id="view-inventory" class="hidden flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-stone-950/60 p-5 rounded-2xl border border-stone-800/60">
+        <div>
+          <h2 class="text-xl font-bold text-stone-100 flex items-center gap-2">
+            <i class="fa-solid fa-boxes-stacked text-crema"></i> Ingredient & Milk Stock Manager
+          </h2>
+          <p class="text-xs text-stone-400 mt-1">Active carton volume tracking, variance micro-calibration, and bulk ingredient reserves</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="openCalibrationModal()" class="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold flex items-center gap-2 border border-stone-700 transition">
+            <i class="fa-solid fa-sliders text-crema"></i> Calibrate Volume
+          </button>
+          <button onclick="restockMilkBox()" class="px-3.5 py-2 rounded-xl bg-crema hover:bg-amber-400 text-stone-950 text-xs font-bold flex items-center gap-2 shadow-md transition">
+            <i class="fa-solid fa-plus"></i> Restock +6 Milk Boxes
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN LIQUID TRACKER & INGREDIENT GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Active Opened Carton Display Card (Left 5 Cols) -->
+        <div class="lg:col-span-5 bg-stone-950/80 rounded-2xl border border-stone-800/80 p-6 flex flex-col justify-between relative overflow-hidden shadow-xl">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active Open Carton
+            </span>
+            <span class="text-xs text-stone-400 font-mono">1000ml Box</span>
+          </div>
+
+          <!-- Interactive Graphic Carton Visual -->
+          <div class="flex items-center justify-center my-4">
+            <div class="relative w-48 h-60 bg-stone-900 border-2 border-stone-700 rounded-2xl flex flex-col justify-end overflow-hidden shadow-inner group">
+              
+              <!-- Container Level Wave Fill -->
+              <div id="carton-liquid-fill" class="liquid-wave w-full relative" style="height: 65%;">
+                <div class="absolute inset-x-0 top-0 h-1 bg-white/40"></div>
+              </div>
+
+              <!-- Measurement Overlay Marks -->
+              <div class="absolute inset-0 flex flex-col justify-between p-3 pointer-events-none text-[10px] font-mono text-stone-400/60 border-l border-dashed border-stone-700/50 ml-4">
+                <div class="flex items-center justify-between"><span>1000ml</span><span class="text-[9px]">100%</span></div>
+                <div class="flex items-center justify-between"><span>750ml</span><span class="text-[9px]">75%</span></div>
+                <div class="flex items-center justify-between"><span>500ml</span><span class="text-[9px]">50%</span></div>
+                <div class="flex items-center justify-between"><span>250ml</span><span class="text-[9px]">25%</span></div>
+                <div class="flex items-center justify-between text-rose-400/80"><span>0ml</span><span class="text-[9px]">0%</span></div>
+              </div>
+
+              <!-- Center Big Text Readout -->
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none drop-shadow-md text-stone-900 font-bold">
+                <div id="carton-percent-text" class="text-3xl font-extrabold tracking-tight">65%</div>
+                <div id="carton-ml-text" class="text-xs font-mono font-semibold bg-stone-950/90 text-crema px-2.5 py-0.5 rounded-full mt-1 border border-stone-800">
+                  650 ml remaining
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Micro Adjustment Variance Bar -->
+          <div class="bg-stone-900/90 rounded-xl p-3 border border-stone-800/80 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-stone-300 font-medium">Quick Variance Calibration:</span>
+              <span class="text-[10px] text-stone-500">Nudge off-by-ml poured error</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5">
+              <button onclick="quickAdjustVolume(-10, 'Pour Over/Spill')" class="py-1.5 bg-stone-800 hover:bg-rose-950 hover:text-rose-300 text-stone-300 rounded-lg text-xs font-mono font-medium transition text-center">-10 ml</button>
+              <button onclick="quickAdjustVolume(-2, 'Steam Wand Drip')" class="py-1.5 bg-stone-800 hover:bg-rose-950 hover:text-rose-300 text-stone-300 rounded-lg text-xs font-mono font-medium transition text-center">-2 ml</button>
+              <button onclick="quickAdjustVolume(2, 'Pitcher Scale Adj')" class="py-1.5 bg-stone-800 hover:bg-emerald-950 hover:text-emerald-300 text-stone-300 rounded-lg text-xs font-mono font-medium transition text-center">+2 ml</button>
+              <button onclick="quickAdjustVolume(10, 'Scale Re-zero')" class="py-1.5 bg-stone-800 hover:bg-emerald-950 hover:text-emerald-300 text-stone-300 rounded-lg text-xs font-mono font-medium transition text-center">+10 ml</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unopened Boxes & Raw Ingredients (Right 7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Unopened Milk Boxes Grid -->
+          <div class="bg-stone-950/80 rounded-2xl border border-stone-800/80 p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="font-bold text-stone-200 text-sm">Unopened Milk Carton Reserve</h3>
+                <p class="text-xs text-stone-400">1000ml sealed boxes in fridge</p>
+              </div>
+              <div id="unopened-count-badge" class="px-3 py-1 bg-crema/20 border border-crema/30 text-crema rounded-xl text-xs font-bold font-mono">
+                12 Boxes Unopened
+              </div>
+            </div>
+
+            <!-- Visual Boxes Grid -->
+            <div id="unopened-boxes-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2.5 p-3 bg-stone-900/50 rounded-xl border border-stone-800/50 min-h-[110px] items-center">
+              <!-- Dynamically populated boxes -->
+            </div>
+
+            <div class="mt-3 p-2.5 bg-amber-950/30 border border-amber-800/40 rounded-xl flex items-center justify-between text-xs text-amber-200">
+              <span class="flex items-center gap-2"><i class="fa-solid fa-circle-info text-amber-400"></i> Auto-opens 1 full box when active box drops to 0ml.</span>
+              <button onclick="forceOpenNewBox()" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg font-semibold text-[11px] whitespace-nowrap transition">Open Box Now</button>
+            </div>
+          </div>
+
+          <!-- All Raw Ingredients Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-2 gap-4">
+            
+            <!-- Coffee Beans Card -->
+            <div class="bg-stone-950/80 p-4 rounded-xl border border-stone-800/80 space-y-2">
+              <div class="flex justify-between items-center text-xs text-stone-400">
+                <span class="font-bold text-stone-200 flex items-center gap-1.5"><i class="fa-solid fa-seedling text-amber-600"></i> Coffee Beans</span>
+                <span class="font-mono text-[10px] text-stone-500">9g / cup</span>
+              </div>
+              <div class="text-xl font-bold font-mono text-stone-100" id="stock-beans-text">2,500 g</div>
+              <div class="flex items-center gap-2">
+                <button onclick="restockIngredient('beans', 500)" class="flex-1 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[11px] text-stone-300 rounded-lg transition">+500g Bag</button>
+              </div>
+            </div>
+
+            <!-- 8oz Paper Cups Card -->
+            <div class="bg-stone-950/80 p-4 rounded-xl border border-stone-800/80 space-y-2">
+              <div class="flex justify-between items-center text-xs text-stone-400">
+                <span class="font-bold text-stone-200 flex items-center gap-1.5"><i class="fa-solid fa-whiskey-glass text-amber-400"></i> 8oz Hot Cups</span>
+                <span class="font-mono text-[10px] text-stone-500">1 cup / order</span>
+              </div>
+              <div class="text-xl font-bold font-mono text-stone-100" id="stock-cups-text">150 units</div>
+              <div class="flex items-center gap-2">
+                <button onclick="restockIngredient('cups', 50)" class="flex-1 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[11px] text-stone-300 rounded-lg transition">+50 Cups</button>
+              </div>
+            </div>
+
+            <!-- Chocolate Syrup Card -->
+            <div class="bg-stone-950/80 p-4 rounded-xl border border-stone-800/80 space-y-2">
+              <div class="flex justify-between items-center text-xs text-stone-400">
+                <span class="font-bold text-stone-200 flex items-center gap-1.5"><i class="fa-solid fa-bottle-droplet text-amber-800"></i> Chocolate Syrup</span>
+                <span class="font-mono text-[10px] text-stone-500">30g / Mocha</span>
+              </div>
+              <div class="text-xl font-bold font-mono text-stone-100" id="stock-choc-text">1,200 g</div>
+              <div class="flex items-center gap-2">
+                <button onclick="restockIngredient('chocolateSyrup', 300)" class="flex-1 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[11px] text-stone-300 rounded-lg transition">+300g Bottle</button>
+              </div>
+            </div>
+
+            <!-- Condensed Milk Card -->
+            <div class="bg-stone-950/80 p-4 rounded-xl border border-stone-800/80 space-y-2">
+              <div class="flex justify-between items-center text-xs text-stone-400">
+                <span class="font-bold text-stone-200 flex items-center gap-1.5"><i class="fa-solid fa-jar text-amber-200"></i> Condensed Milk</span>
+                <span class="font-mono text-[10px] text-stone-500">30g / Spanish Latte</span>
+              </div>
+              <div class="text-xl font-bold font-mono text-stone-100" id="stock-condensed-text">900 g</div>
+              <div class="flex items-center gap-2">
+                <button onclick="restockIngredient('condensedMilk', 300)" class="flex-1 py-1 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-[11px] text-stone-300 rounded-lg transition">+300g Can</button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: AUDIT & CONSUMPTION LOGS ================= -->
+    <section id="view-logs" class="hidden flex-1 overflow-y-auto p-4 lg:p-8 space-y-4">
+      <div class="flex items-center justify-between bg-stone-950/60 p-5 rounded-2xl border border-stone-800/60">
+        <div>
+          <h2 class="text-xl font-bold text-stone-100 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-crema"></i> Real-time Stock Consumption Log
+          </h2>
+          <p class="text-xs text-stone-400 mt-1">Automatic order recipe deductions and variance recalibrations</p>
+        </div>
+        <button onclick="clearLogs()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold rounded-lg transition">Clear Log View</button>
+      </div>
+
+      <div class="bg-stone-950/80 rounded-2xl border border-stone-800/80 overflow-hidden shadow-lg">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-stone-900 border-b border-stone-800 text-stone-400 font-semibold">
+                <th class="p-3.5 pl-5">Timestamp</th>
+                <th class="p-3.5">Trigger / Event</th>
+                <th class="p-3.5">Ingredients Deducted</th>
+                <th class="p-3.5">Active Milk Remaining</th>
+                <th class="p-3.5">Type</th>
+                <th class="p-3.5 pr-5">Note</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body" class="divide-y divide-stone-800/50 font-mono text-stone-300">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: MILK CALIBRATION ================= -->
+  <div id="calibration-modal" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-stone-900 border border-stone-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+        <h3 class="font-bold text-stone-100 text-base flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-crema"></i> Calibrate Active Milk Carton
+        </h3>
+        <button onclick="closeCalibrationModal()" class="text-stone-500 hover:text-stone-300"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-stone-400 mb-1">Enter Measured Active Remaining Volume (ml)</label>
+          <div class="relative">
+            <input type="number" id="calib-exact-ml" min="0" max="1000" class="w-full bg-stone-950 border border-stone-800 text-stone-100 px-3 py-2.5 rounded-xl font-mono text-sm focus:outline-none focus:border-crema pl-3 pr-12">
+            <span class="absolute right-3 top-3 text-stone-500 font-mono">ml</span>
+          </div>
+          <p class="text-[10px] text-stone-500 mt-1">Current system calculated volume: <span id="modal-current-ml" class="text-crema font-mono font-bold">650 ml</span></p>
+        </div>
+
+        <div>
+          <label class="block text-stone-400 mb-1">Reason for Adjustment</label>
+          <select id="calib-reason" class="w-full bg-stone-950 border border-stone-800 text-stone-200 px-3 py-2.5 rounded-xl focus:outline-none focus:border-crema">
+            <option value="Steam wand purge / froth loss">Steam wand purge / froth loss</option>
+            <option value="Minor scale pour discrepancy">Minor scale pour discrepancy (off by few ml)</option>
+            <option value="Accidental pitcher spill">Accidental pitcher spill</option>
+            <option value="Manual end-of-shift tare check">Manual end-of-shift tare check</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-3 border-t border-stone-800">
+        <button onclick="closeCalibrationModal()" class="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold rounded-xl transition text-xs">Cancel</button>
+        <button onclick="applyCalibrationModal()" class="px-4 py-2 bg-crema hover:bg-amber-400 text-stone-950 font-bold rounded-xl transition text-xs">Save Calibration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-stone-800 border border-stone-700 text-stone-100 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="toast-message" class="text-xs font-medium">Notification message</span>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- APP STATE & INGREDIENT RECIPES ---
+    const STATE = {
+      // Inventory Balances
+      inventory: {
+        activeMilkMl: 650,      // Active opened carton (1000ml cap)
+        unopenedMilkBoxes: 12,  // Unopened 1000ml boxes
+        coffeeBeansG: 2500,     // grams
+        paperCups8oz: 150,      // units
+        chocolateSyrupG: 1200,  // grams
+        condensedMilkG: 900,    // grams
+        cartonCapMl: 1000
+      },
+      cart: [],
+      // Menu Items with Exact Standardized Recipes (8oz Hot Drinks)
+      menu: [
+        {
+          id: 'americano',
+          name: 'Americano',
+          size: '8oz Hot Cup',
+          price: 3.50,
+          recipe: { beansG: 9, milkMl: 0, chocSyrupG: 0, condensedMilkG: 0, cups: 1 },
+          icon: 'fa-mug-hot',
+          desc: 'Hot Water + 9g Espresso Beans'
+        },
+        {
+          id: 'cappuccino',
+          name: 'Cappuccino',
+          size: '8oz Hot Cup',
+          price: 4.50,
+          recipe: { beansG: 9, milkMl: 118, chocSyrupG: 0, condensedMilkG: 0, cups: 1 }, // 4oz milk approx 118ml
+          icon: 'fa-mug-saucer',
+          desc: '4oz Milk (118ml) + 9g Espresso Beans'
+        },
+        {
+          id: 'mocha',
+          name: 'Mocha',
+          size: '8oz Hot Cup',
+          price: 5.25,
+          recipe: { beansG: 9, milkMl: 118, chocSyrupG: 30, condensedMilkG: 0, cups: 1 },
+          icon: 'fa-cubes-stacked',
+          desc: '4oz Milk (118ml) + 9g Beans + 30g Choc Syrup'
+        },
+        {
+          id: 'spanish_latte',
+          name: 'Spanish Latte',
+          size: '8oz Hot Cup',
+          price: 5.25,
+          recipe: { beansG: 9, milkMl: 118, chocSyrupG: 0, condensedMilkG: 30, cups: 1 },
+          icon: 'fa-whiskey-glass',
+          desc: '4oz Milk (118ml) + 9g Beans + 30g Condensed Milk'
+        }
+      ],
+      shiftStats: {
+        cupsSold: 0,
+        milkPouredMl: 0
+      },
+      logs: [
+        { time: '09:10 AM', trigger: 'Sample Order (Spanish Latte)', deducted: '118ml Milk, 9g Beans, 30g Condensed, 1 Cup', remainingMilk: '650 ml', type: 'Deduction', note: 'POS Checkout' },
+        { time: '08:30 AM', trigger: 'Calibration', deducted: '-10ml Milk', remainingMilk: '768 ml', type: 'Variance', note: 'Steam wand purge' }
+      ]
+    };
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      renderMenu();
+      updateInventoryUI();
+      renderUnopenedBoxes();
+      renderLogs();
+    };
+
+    // --- NAVIGATION ---
+    function switchTab(tab) {
+      document.getElementById('view-pos').classList.add('hidden');
+      document.getElementById('view-inventory').classList.add('hidden');
+      document.getElementById('view-logs').classList.add('hidden');
+
+      ['pos', 'inventory', 'logs'].forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        btn.className = "w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 text-stone-400 hover:text-stone-100 hover:bg-stone-900 font-medium";
+      });
+
+      document.getElementById(`nav-${tab}`).className = "w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 bg-crema text-stone-950 font-semibold shadow-md";
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+    }
+
+    // --- MENU RENDER ---
+    function renderMenu() {
+      const grid = document.getElementById('pos-menu-grid');
+      grid.innerHTML = '';
+
+      STATE.menu.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "bg-stone-950/80 border border-stone-800 hover:border-crema rounded-2xl p-5 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:-translate-y-0.5 shadow-lg group";
+        card.onclick = () => addToCart(item.id);
+
+        const r = item.recipe;
+        let recipeTags = `<span class="bg-stone-900 border border-stone-800 px-2 py-0.5 rounded text-amber-200">${r.beansG}g Beans</span>`;
+        if (r.milkMl > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-2 py-0.5 rounded text-crema">${r.milkMl}ml Milk</span>`;
+        if (r.chocSyrupG > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-2 py-0.5 rounded text-stone-300">${r.chocSyrupG}g Choc</span>`;
+        if (r.condensedMilkG > 0) recipeTags += `<span class="bg-stone-900 border border-stone-800 px-2 py-0.5 rounded text-amber-100">${r.condensedMilkG}g Cond. Milk</span>`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-3">
+              <div class="w-12 h-12 rounded-2xl bg-stone-900 border border-stone-800 group-hover:border-crema/40 flex items-center justify-center text-crema text-xl transition">
+                <i class="fa-solid ${item.icon}"></i>
+              </div>
+              <span class="font-mono text-base font-bold text-crema">$${item.price.toFixed(2)}</span>
+            </div>
+            <h3 class="font-bold text-stone-100 text-base">${item.name}</h3>
+            <p class="text-xs text-stone-400 mt-0.5">${item.desc}</p>
+            <div class="flex flex-wrap gap-1.5 mt-3 text-[10px] font-mono">
+              ${recipeTags}
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-stone-900 flex justify-between items-center text-xs text-stone-400 group-hover:text-stone-100">
+            <span>Add to Order</span>
+            <i class="fa-solid fa-circle-plus text-crema text-sm"></i>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // --- CART LOGIC ---
+    function addToCart(itemId) {
+      const item = STATE.menu.find(m => m.id === itemId);
+      const existing = STATE.cart.find(c => c.id === itemId);
+
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        STATE.cart.push({ ...item, qty: 1 });
+      }
+
+      updateCartUI();
+    }
+
+    function updateCartQty(itemId, delta) {
+      const index = STATE.cart.findIndex(c => c.id === itemId);
+      if (index > -1) {
+        STATE.cart[index].qty += delta;
+        if (STATE.cart[index].qty <= 0) {
+          STATE.cart.splice(index, 1);
+        }
+      }
+      updateCartUI();
+    }
+
+    function clearCart() {
+      STATE.cart = [];
+      updateCartUI();
+    }
+
+    function calculateCartIngredients() {
+      let totals = { beansG: 0, milkMl: 0, chocSyrupG: 0, condensedMilkG: 0, cups: 0, subtotal: 0 };
+      STATE.cart.forEach(item => {
+        totals.subtotal += item.price * item.qty;
+        totals.beansG += item.recipe.beansG * item.qty;
+        totals.milkMl += item.recipe.milkMl * item.qty;
+        totals.chocSyrupG += item.recipe.chocSyrupG * item.qty;
+        totals.condensedMilkG += item.recipe.condensedMilkG * item.qty;
+        totals.cups += item.recipe.cups * item.qty;
+      });
+      return totals;
+    }
+
+    function updateCartUI() {
+      const container = document.getElementById('cart-items-container');
+      const emptyState = document.getElementById('cart-empty-state');
+      const impactPanel = document.getElementById('cart-impact-panel');
+      const checkoutBtn = document.getElementById('checkout-btn');
+
+      if (STATE.cart.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(emptyState);
+        impactPanel.classList.add('hidden');
+        checkoutBtn.disabled = true;
+
+        document.getElementById('cart-subtotal').innerText = '$0.00';
+        document.getElementById('cart-tax').innerText = '$0.00';
+        document.getElementById('cart-total').innerText = '$0.00';
+        return;
+      }
+
+      emptyState.remove();
+      container.innerHTML = '';
+
+      STATE.cart.forEach(cartItem => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between bg-stone-900 p-3 rounded-xl border border-stone-800 text-xs";
+        row.innerHTML = `
+          <div class="flex-1 pr-2">
+            <div class="font-bold text-stone-200">${cartItem.name}</div>
+            <div class="text-[10px] text-stone-400 font-mono">$${cartItem.price.toFixed(2)} each</div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="updateCartQty('${cartItem.id}', -1)" class="w-6 h-6 rounded-lg bg-stone-800 text-stone-300 hover:bg-stone-700 flex items-center justify-center font-bold">-</button>
+            <span class="font-mono font-bold text-stone-200 w-4 text-center">${cartItem.qty}</span>
+            <button onclick="updateCartQty('${cartItem.id}', 1)" class="w-6 h-6 rounded-lg bg-stone-800 text-stone-300 hover:bg-stone-700 flex items-center justify-center font-bold">+</button>
+          </div>
+          <div class="w-16 text-right font-mono font-bold text-crema">
+            $${(cartItem.price * cartItem.qty).toFixed(2)}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      const totals = calculateCartIngredients();
+
+      impactPanel.classList.remove('hidden');
+      document.getElementById('impact-cups').innerText = `${totals.cups} units`;
+      document.getElementById('impact-beans').innerText = `${totals.beansG} g`;
+      document.getElementById('impact-milk').innerText = `${totals.milkMl} ml`;
+      document.getElementById('impact-choc').innerText = `${totals.chocSyrupG} g`;
+      document.getElementById('impact-condensed').innerText = `${totals.condensedMilkG} g`;
+
+      const tax = totals.subtotal * 0.08;
+      const grandTotal = totals.subtotal + tax;
+
+      document.getElementById('cart-subtotal').innerText = `$${totals.subtotal.toFixed(2)}`;
+      document.getElementById('cart-tax').innerText = `$${tax.toFixed(2)}`;
+      document.getElementById('cart-total').innerText = `$${grandTotal.toFixed(2)}`;
+
+      checkoutBtn.disabled = false;
+    }
+
+    // --- CHECKOUT & STOCK DEDUCTION ---
+    function processCheckout() {
+      if (STATE.cart.length === 0) return;
+
+      const req = calculateCartIngredients();
+      const inv = STATE.inventory;
+
+      // Check stock sufficiency
+      const totalAvailableMilkMl = (inv.unopenedMilkBoxes * 1000) + inv.activeMilkMl;
+
+      if (inv.paperCups8oz < req.cups) {
+        showToast(`Insufficient 8oz Cups! Required: ${req.cups}, Stock: ${inv.paperCups8oz}`, 'error');
+        return;
+      }
+      if (inv.coffeeBeansG < req.beansG) {
+        showToast(`Insufficient Coffee Beans! Required: ${req.beansG}g, Stock: ${inv.coffeeBeansG}g`, 'error');
+        return;
+      }
+      if (req.milkMl > totalAvailableMilkMl) {
+        showToast(`Insufficient Milk! Required: ${req.milkMl}ml, Total Stock: ${totalAvailableMilkMl}ml`, 'error');
+        return;
+      }
+      if (inv.chocolateSyrupG < req.chocSyrupG) {
+        showToast(`Insufficient Chocolate Syrup! Required: ${req.chocSyrupG}g, Stock: ${inv.chocolateSyrupG}g`, 'error');
+        return;
+      }
+      if (inv.condensedMilkG < req.condensedMilkG) {
+        showToast(`Insufficient Condensed Milk! Required: ${req.condensedMilkG}g, Stock: ${inv.condensedMilkG}g`, 'error');
+        return;
+      }
+
+      // Perform Exact Ingredient Deductions
+      inv.paperCups8oz -= req.cups;
+      inv.coffeeBeansG -= req.beansG;
+      inv.chocolateSyrupG -= req.chocSyrupG;
+      inv.condensedMilkG -= req.condensedMilkG;
+
+      // Deduct Milk with Active Box Transition Logic
+      let milkToDeduct = req.milkMl;
+      if (milkToDeduct > 0) {
+        STATE.shiftStats.milkPouredMl += milkToDeduct;
+        if (inv.activeMilkMl >= milkToDeduct) {
+          inv.activeMilkMl -= milkToDeduct;
+        } else {
+          // Open new carton from stock
+          const overflow = milkToDeduct - inv.activeMilkMl;
+          inv.unopenedMilkBoxes -= 1;
+          inv.activeMilkMl = 1000 - overflow;
+          addLog('Auto Box Opened', '-1 Full Box', '1000 ml', 'Restock', 'Active carton ran out during order');
+          showToast('Active milk carton emptied. Opened 1 box from reserve!', 'info');
+        }
+      }
+
+      STATE.shiftStats.cupsSold += req.cups;
+
+      // Audit Log Summary
+      const orderNames = STATE.cart.map(c => `${c.qty}x ${c.name}`).join(', ');
+      const deductedSummary = `${req.cups} Cup(s), ${req.beansG}g Beans${req.milkMl > 0 ? `, ${req.milkMl}ml Milk` : ''}${req.chocSyrupG > 0 ? `, ${req.chocSyrupG}g Choc` : ''}${req.condensedMilkG > 0 ? `, ${req.condensedMilkG}g Cond.Milk` : ''}`;
+
+      addLog(`Order (${orderNames})`, deductedSummary, `${inv.activeMilkMl} ml`, 'Deduction', 'POS Checkout Success');
+
+      showToast(`Order processed! Deducted exact recipe stock. Total: $${document.getElementById('cart-total').innerText}`, 'success');
+      
+      clearCart();
+      updateInventoryUI();
+      renderUnopenedBoxes();
+    }
+
+    // --- MILK & INGREDIENT CALIBRATION / ADJUSTMENTS ---
+    function quickAdjustVolume(deltaMl, reason = 'Micro Variance') {
+      let newMl = STATE.inventory.activeMilkMl + deltaMl;
+      if (newMl < 0) newMl = 0;
+      if (newMl > 1000) newMl = 1000;
+
+      const diff = newMl - STATE.inventory.activeMilkMl;
+      STATE.inventory.activeMilkMl = newMl;
+
+      const sign = diff >= 0 ? `+${diff}` : `${diff}`;
+      addLog('Variance Calibration', `${sign} ml Milk`, `${STATE.inventory.activeMilkMl} ml`, 'Variance', reason);
+
+      updateInventoryUI();
+      showToast(`Calibrated active milk volume by ${sign}ml (${reason})`, 'info');
+    }
+
+    function forceOpenNewBox() {
+      if (STATE.inventory.unopenedMilkBoxes <= 0) {
+        showToast('No unopened boxes available in reserve!', 'error');
+        return;
+      }
+      STATE.inventory.unopenedMilkBoxes -= 1;
+      STATE.inventory.activeMilkMl = 1000;
+
+      addLog('Manual Open Box', '-1 Box', '1000 ml', 'Restock', 'Barista manually opened new 1L carton');
+      updateInventoryUI();
+      renderUnopenedBoxes();
+      showToast('Opened a new 1L Milk Box into active container.', 'success');
+    }
+
+    function restockMilkBox() {
+      STATE.inventory.unopenedMilkBoxes += 6;
+      addLog('Restock Shipment', '+6 Boxes', `${STATE.inventory.unopenedMilkBoxes} Boxes`, 'Restock', 'Added 6 unopened 1L cartons to fridge');
+      updateInventoryUI();
+      renderUnopenedBoxes();
+      showToast('Added +6 unopened 1L milk boxes to reserve!', 'success');
+    }
+
+    function restockIngredient(type, amount) {
+      if (type === 'beans') STATE.inventory.coffeeBeansG += amount;
+      if (type === 'cups') STATE.inventory.paperCups8oz += amount;
+      if (type === 'chocolateSyrup') STATE.inventory.chocolateSyrupG += amount;
+      if (type === 'condensedMilk') STATE.inventory.condensedMilkG += amount;
+
+      addLog('Ingredient Restock', `+${amount} units/g`, `${STATE.inventory.activeMilkMl} ml`, 'Restock', `Restocked ${type}`);
+      updateInventoryUI();
+      showToast(`Restocked +${amount} to ${type}`, 'success');
+    }
+
+    function updateInventoryUI() {
+      const activeMl = STATE.inventory.activeMilkMl;
+      const pct = Math.round((activeMl / STATE.inventory.cartonCapMl) * 100);
+
+      // Gauge graphics
+      document.getElementById('carton-liquid-fill').style.height = `${pct}%`;
+      document.getElementById('carton-percent-text').innerText = `${pct}%`;
+      document.getElementById('carton-ml-text').innerText = `${activeMl} ml remaining`;
+      document.getElementById('pos-active-milk-display').innerText = `${activeMl}ml (${pct}%)`;
+
+      // Unopened Boxes Badge
+      document.getElementById('unopened-count-badge').innerText = `${STATE.inventory.unopenedMilkBoxes} Boxes Unopened`;
+
+      // Ingredient Balances
+      document.getElementById('stock-beans-text').innerText = `${STATE.inventory.coffeeBeansG.toLocaleString()} g`;
+      document.getElementById('stock-cups-text').innerText = `${STATE.inventory.paperCups8oz} units`;
+      document.getElementById('stock-choc-text').innerText = `${STATE.inventory.chocolateSyrupG.toLocaleString()} g`;
+      document.getElementById('stock-condensed-text').innerText = `${STATE.inventory.condensedMilkG.toLocaleString()} g`;
+
+      // Shift Stats
+      document.getElementById('shift-cups-sold').innerText = STATE.shiftStats.cupsSold;
+      document.getElementById('shift-milk-poured').innerText = `${STATE.shiftStats.milkPouredMl} ml`;
+    }
+
+    function renderUnopenedBoxes() {
+      const grid = document.getElementById('unopened-boxes-grid');
+      grid.innerHTML = '';
+
+      const count = STATE.inventory.unopenedMilkBoxes;
+      if (count === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-3 text-xs text-rose-400 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> No unopened milk cartons in reserve!</div>`;
+        return;
+      }
+
+      for (let i = 0; i < count; i++) {
+        const box = document.createElement('div');
+        box.className = "bg-stone-800/80 border border-stone-700 hover:border-crema rounded-xl p-2 flex flex-col items-center justify-center text-center transition shadow";
+        box.innerHTML = `
+          <i class="fa-solid fa-box text-crema text-lg mb-0.5"></i>
+          <span class="text-[10px] font-mono text-stone-300 font-semibold">1L Box</span>
+        `;
+        grid.appendChild(box);
+      }
+    }
+
+    // --- MODAL CALIBRATION ---
+    function openCalibrationModal() {
+      document.getElementById('modal-current-ml').innerText = `${STATE.inventory.activeMilkMl} ml`;
+      document.getElementById('calib-exact-ml').value = STATE.inventory.activeMilkMl;
+      document.getElementById('calibration-modal').classList.remove('hidden');
+    }
+
+    function closeCalibrationModal() {
+      document.getElementById('calibration-modal').classList.add('hidden');
+    }
+
+    function applyCalibrationModal() {
+      const targetMl = parseInt(document.getElementById('calib-exact-ml').value, 10);
+      const reason = document.getElementById('calib-reason').value;
+
+      if (isNaN(targetMl) || targetMl < 0 || targetMl > 1000) {
+        showToast('Please enter a valid milliliter value between 0 and 1000ml', 'error');
+        return;
+      }
+
+      const diff = targetMl - STATE.inventory.activeMilkMl;
+      STATE.inventory.activeMilkMl = targetMl;
+
+      const sign = diff >= 0 ? `+${diff}` : `${diff}`;
+      addLog('Scale Recalibration', `${sign} ml Milk`, `${STATE.inventory.activeMilkMl} ml`, 'Calibration', reason);
+
+      updateInventoryUI();
+      closeCalibrationModal();
+      showToast(`Active milk box calibrated to ${targetMl}ml`, 'success');
+    }
+
+    // --- LOGS ---
+    function addLog(trigger, deducted, remainingMilk, type, note) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      STATE.logs.unshift({ time: timeStr, trigger, deducted, remainingMilk, type, note });
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const tbody = document.getElementById('logs-table-body');
+      tbody.innerHTML = '';
+
+      STATE.logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-stone-900/60 transition";
+
+        let typeClass = "bg-stone-800 text-stone-300";
+        if (log.type === 'Deduction') typeClass = "bg-amber-950/40 text-amber-300 border border-amber-800/40";
+        if (log.type === 'Variance') typeClass = "bg-rose-950/40 text-rose-300 border border-rose-800/40";
+        if (log.type === 'Restock') typeClass = "bg-emerald-950/40 text-emerald-300 border border-emerald-800/40";
+
+        tr.innerHTML = `
+          <td class="p-3.5 pl-5 text-stone-400">${log.time}</td>
+          <td class="p-3.5 font-semibold text-stone-200">${log.trigger}</td>
+          <td class="p-3.5 font-bold text-stone-300">${log.deducted}</td>
+          <td class="p-3.5 text-crema">${log.remainingMilk}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${typeClass}">${log.type}</span></td>
+          <td class="p-3.5 pr-5 text-stone-400 font-sans text-[11px]">${log.note}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearLogs() {
+      STATE.logs = [];
+      renderLogs();
+    }
+
+    // --- TOAST NOTIFICATIONS ---
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = msg;
+
+      if (type === 'success') {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-base";
+      } else if (type === 'error') {
+        toastIcon.className = "fa-solid fa-circle-xmark text-rose-400 text-base";
+      } else {
+        toastIcon.className = "fa-solid fa-circle-info text-crema text-base";
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
